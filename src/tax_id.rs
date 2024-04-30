@@ -4,6 +4,7 @@ use crate::errors::ValidationError;
 
 pub trait TaxIdType {
     fn name(&self) -> &'static str;
+    fn ensure_valid_syntax(&self, value: &str) -> bool;
 }
 
 struct TaxId {
@@ -23,12 +24,15 @@ impl TaxId {
             _ => return Err(ValidationError::new("Unknown country code"))
         };
 
-        Ok(TaxId {
-            id_type: id_type.name(),
-            value: value.to_string(),
-            country_code: country_code.to_string(),
-            local_value: local_value.to_string(),
-        })
+        match id_type.ensure_valid_syntax(local_value) {
+            false => Err(ValidationError::new("Invalid syntax")),
+            true => Ok(TaxId {
+                id_type: id_type.name(),
+                value: value.to_string(),
+                country_code: country_code.to_string(),
+                local_value: local_value.to_string(),
+            })
+        }
     }
 
     pub fn value(&self) -> &str { &self.value }
@@ -63,5 +67,11 @@ mod tests {
     #[should_panic(expected = "Unknown country code")]
     fn test_new_unknown_country_code() {
         let _ = TaxId::new("XX123456789").unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid syntax")]
+    fn test_failed_validation() {
+        let _ = TaxId::new("SE12").unwrap();
     }
 }
