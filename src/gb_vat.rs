@@ -12,6 +12,10 @@ impl TaxIdType for GBVat {
         let regex = Regex::new(r"^GB([0-9]{9}|[0-9]{12}|(HA|GD)[0-9]{3})$").unwrap();
         regex.is_match(value)
     }
+
+    fn country_code_from(&self, tax_country_code: &str) -> String {
+        tax_country_code.to_string()
+    }
 }
 
 #[cfg(test)]

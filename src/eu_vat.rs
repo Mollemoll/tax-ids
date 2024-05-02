@@ -26,6 +26,16 @@ impl TaxIdType for EUVat {
 
         pattern.is_match(value)
     }
+
+    fn country_code_from(&self, tax_country_code: &str) -> String {
+        let country_code = match tax_country_code {
+            "XI" => "GB",
+            "EL" => "GR",
+            _ => tax_country_code,
+        };
+
+        country_code.to_string()
+    }
 }
 
 #[cfg(test)]
