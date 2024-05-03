@@ -35,8 +35,8 @@ impl VIES {
 }
 
 impl Verifier for VIES {
-    async fn make_request(&self, tax_id: TaxId) -> Result<String, VerificationError> {
-        let client = reqwest::Client::new();
+    fn make_request(&self, tax_id: &TaxId) -> Result<String, VerificationError> {
+        let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
             .replace("{country}", tax_id.tax_country_code())
             .replace("{number}", tax_id.local_value());
@@ -45,10 +45,8 @@ impl Verifier for VIES {
             .header("Content-Type", "text/xml")
             .body(body)
             .send()
-            .await
             .map_err(VerificationError::HttpError)?
             .text()
-            .await
             .map_err(VerificationError::HttpError)?;
 
         Ok(res)

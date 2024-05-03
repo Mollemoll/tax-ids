@@ -27,13 +27,12 @@ impl Verification {
 }
 
 pub trait Verifier {
-    async fn verify(&self, tax_id: TaxId) -> Result<Verification, VerificationError> {
-        let request = self.make_request(tax_id).await?;
+    fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
+        let request = self.make_request(tax_id)?;
         let verification = self.parse_response(request)?;
         Ok(verification)
     }
-
-    async fn make_request(&self, tax_id: TaxId) -> Result<String, VerificationError>;
+    fn make_request(&self, tax_id: &TaxId) -> Result<String, VerificationError>;
 
     fn parse_response(&self, _response: String) -> Result<Verification, VerificationError>;
 }
@@ -52,7 +51,7 @@ mod tests {
     struct TestVerifier;
 
     impl Verifier for TestVerifier {
-        async fn make_request(&self, _tax_id: TaxId) -> Result<String, VerificationError> {
+        fn make_request(&self, _tax_id: &TaxId) -> Result<String, VerificationError> {
             Ok("test".to_string())
         }
 
@@ -63,11 +62,11 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn test_verify() {
+    #[test]
+    fn test_verify() {
         let tax_id = TaxId::new("SE123456789101").unwrap();
         let verifier = TestVerifier;
-        let verification = verifier.verify(tax_id).await.unwrap();
+        let verification = verifier.verify(&tax_id).unwrap();
         assert_eq!(*verification.status(), VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
     }
