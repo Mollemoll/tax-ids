@@ -1,5 +1,6 @@
 use regex::Regex;
 use crate::tax_id::TaxIdType;
+use crate::verification::Verifier;
 
 pub struct GBVat;
 
@@ -15,6 +16,10 @@ impl TaxIdType for GBVat {
 
     fn country_code_from(&self, tax_country_code: &str) -> String {
         tax_country_code.to_string()
+    }
+
+    fn verifier(&self) -> Box<dyn Verifier> {
+        unimplemented!()
     }
 }
 

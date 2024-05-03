@@ -1,12 +1,17 @@
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
-use crate::errors::ValidationError;
+use crate::errors::{ValidationError, VerificationError};
 use crate::eu_vat;
+use crate::verification::{Verification, Verifier};
 
 pub trait TaxIdType {
     fn name(&self) -> &'static str;
     fn ensure_valid_syntax(&self, value: &str) -> bool;
     fn country_code_from(&self, tax_country_code: &str) -> String;
+    fn verifier(&self) -> Box<dyn Verifier>;
+    fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
+        self.verifier().verify(tax_id)
+    }
 }
 
 pub struct TaxId {
@@ -38,6 +43,10 @@ impl TaxId {
                 id_type,
             })
         }
+    }
+
+    pub fn verify(&self) -> Result<Verification, VerificationError> {
+        self.id_type.verifier().verify(self)
     }
 
     pub fn value(&self) -> &str { &self.value }

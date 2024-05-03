@@ -9,7 +9,7 @@ pub enum VerificationStatus {
     Unavailable,
 }
 
-
+#[derive(Debug)]
 pub struct Verification {
     performed_at: DateTime<Local>,
     status: VerificationStatus,
