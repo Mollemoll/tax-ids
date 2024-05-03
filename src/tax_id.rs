@@ -1,21 +1,25 @@
-use std::process::id;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
-use crate::errors::ValidationError;
+use crate::errors::{ValidationError, VerificationError};
 use crate::eu_vat;
+use crate::verification::{Verification, Verifier};
 
 pub trait TaxIdType {
     fn name(&self) -> &'static str;
     fn ensure_valid_syntax(&self, value: &str) -> bool;
     fn country_code_from(&self, tax_country_code: &str) -> String;
+    fn verifier(&self) -> Box<dyn Verifier>;
+    fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
+        self.verifier().verify(tax_id)
+    }
 }
 
-struct TaxId {
+pub struct TaxId {
     value: String,
     country_code: String,
     tax_country_code: String,
     local_value: String,
-    id_type: &'static str,
+    id_type: Box<dyn TaxIdType>,
 }
 
 impl TaxId {
@@ -32,19 +36,24 @@ impl TaxId {
         match id_type.ensure_valid_syntax(value) {
             false => Err(ValidationError::new("Invalid syntax")),
             true => Ok(TaxId {
-                id_type: id_type.name(),
+                country_code: id_type.country_code_from(tax_country_code),
                 value: value.to_string(),
                 tax_country_code: tax_country_code.to_string(),
-                country_code: id_type.country_code_from(tax_country_code),
                 local_value: local_value.to_string(),
+                id_type,
             })
         }
     }
 
+    pub fn verify(&self) -> Result<Verification, VerificationError> {
+        self.id_type.verifier().verify(self)
+    }
+
     pub fn value(&self) -> &str { &self.value }
     pub fn country_code(&self) -> &str { &self.country_code }
+    pub fn tax_country_code(&self) -> &str { &self.tax_country_code }
     pub fn local_value(&self) -> &str { &self.local_value }
-    pub fn id_type(&self) -> &str { &self.id_type }
+    pub fn id_type(&self) -> &Box<dyn TaxIdType> { &self.id_type }
 }
 
 #[cfg(test)]
@@ -57,7 +66,7 @@ mod tests {
         assert_eq!(tax_id.value(), "SE123456789101");
         assert_eq!(tax_id.country_code(), "SE");
         assert_eq!(tax_id.local_value(), "123456789101");
-        assert_eq!(tax_id.id_type(), "eu_vat");
+        assert_eq!(tax_id.id_type().name(), "eu_vat");
     }
 
     #[test]
@@ -66,7 +75,7 @@ mod tests {
         assert_eq!(tax_id.value(), "EL123456789");
         assert_eq!(tax_id.country_code(), "GR");
         assert_eq!(tax_id.local_value(), "123456789");
-        assert_eq!(tax_id.id_type(), "eu_vat");
+        assert_eq!(tax_id.id_type().name(), "eu_vat");
     }
 
     #[test]
@@ -75,7 +84,7 @@ mod tests {
         assert_eq!(tax_id.value(), "GB591819014");
         assert_eq!(tax_id.country_code(), "GB");
         assert_eq!(tax_id.local_value(), "591819014");
-        assert_eq!(tax_id.id_type(), "gb_vat");
+        assert_eq!(tax_id.id_type().name(), "gb_vat");
     }
 
     #[test]
@@ -84,7 +93,7 @@ mod tests {
         assert_eq!(tax_id.value(), "XI591819014");
         assert_eq!(tax_id.country_code(), "GB");
         assert_eq!(tax_id.local_value(), "591819014");
-        assert_eq!(tax_id.id_type(), "eu_vat");
+        assert_eq!(tax_id.id_type().name(), "eu_vat");
     }
 
     #[test]

@@ -1,8 +1,10 @@
 mod syntax;
+mod vies;
 
 use lazy_static::lazy_static;
 use syntax::EU_VAT_PATTERNS;
 use crate::tax_id::TaxIdType;
+use crate::verification::{Verifier};
 
 pub struct EUVat;
 
@@ -35,6 +37,10 @@ impl TaxIdType for EUVat {
         };
 
         country_code.to_string()
+    }
+
+    fn verifier(&self) -> Box<dyn Verifier> {
+        Box::new(vies::VIES)
     }
 }
 
