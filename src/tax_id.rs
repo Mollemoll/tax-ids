@@ -1,4 +1,3 @@
-use std::process::id;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
 use crate::errors::ValidationError;
@@ -10,7 +9,7 @@ pub trait TaxIdType {
     fn country_code_from(&self, tax_country_code: &str) -> String;
 }
 
-struct TaxId {
+pub struct TaxId {
     value: String,
     country_code: String,
     tax_country_code: String,
@@ -43,6 +42,7 @@ impl TaxId {
 
     pub fn value(&self) -> &str { &self.value }
     pub fn country_code(&self) -> &str { &self.country_code }
+    pub fn tax_country_code(&self) -> &str { &self.tax_country_code }
     pub fn local_value(&self) -> &str { &self.local_value }
     pub fn id_type(&self) -> &str { &self.id_type }
 }

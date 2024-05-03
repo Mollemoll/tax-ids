@@ -1,4 +1,5 @@
 mod syntax;
+mod vies;
 
 use lazy_static::lazy_static;
 use syntax::EU_VAT_PATTERNS;
