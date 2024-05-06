@@ -25,8 +25,16 @@ impl VIES {
 
         for node in xml.descendants() {
             let tag_name = node.tag_name().name();
+            if tag_name.trim().is_empty() {
+                continue;
+            }
+
             if let Some(text) = node.text() {
-                hash.insert(tag_name.to_string(), text.to_string());
+                if text == "---" {
+                    hash.insert(tag_name.to_string(), "".to_string());
+                } else {
+                    hash.insert(tag_name.to_string(), text.to_string());
+                }
             }
         }
 
@@ -60,19 +68,23 @@ impl Verifier for VIES {
         if fault.is_some() {
             return Ok(
                 Verification::new(
-                    VerificationStatus::Unavailable
+                    VerificationStatus::Unavailable,
+                    hash
                 )
             );
         } else {
+            let verification_status = match hash.get("valid")
+                .expect("Missing valid field in VIES response")
+                .as_str() {
+                    "true" => VerificationStatus::Verified,
+                    "false" => VerificationStatus::Unverified,
+                    _ => panic!("Invalid value for valid field in VIES response")
+                };
+
             Ok(
                 Verification::new(
-                    if hash.get("valid").unwrap() == "true" {
-                        VerificationStatus::Verified
-                    } else if hash.get("valid").unwrap() == "false" {
-                        VerificationStatus::Unverified
-                    } else {
-                        panic!("Unexpected response")
-                    }
+                    verification_status,
+                    hash
                 )
             )
         }
@@ -95,7 +107,7 @@ mod tests {
                         <requestDate>2021-01-01+01:00</requestDate>
                         <valid>true</valid>
                         <name>Test Company</name>
-                        <address>Test Address</address>
+                        <address>---</address>
                     </checkVat>
                 </soapenv:Body>
             </soapenv:Envelope>
@@ -108,7 +120,7 @@ mod tests {
         assert_eq!(hash.get("requestDate"), Some(&"2021-01-01+01:00".to_string()));
         assert_eq!(hash.get("valid"), Some(&"true".to_string()));
         assert_eq!(hash.get("name"), Some(&"Test Company".to_string()));
-        assert_eq!(hash.get("address"), Some(&"Test Address".to_string()));
+        assert_eq!(hash.get("address"), Some(&"".to_string()));
     }
 
     #[test]
@@ -174,5 +186,7 @@ mod tests {
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
         assert_eq!(*verification.status(), VerificationStatus::Unavailable);
+        assert_eq!(verification.data().get("faultcode"), Some(&"env:Server".to_string()));
+        assert_eq!(verification.data().get("faultstring"), Some(&"MS_MAX_CONCURRENT_REQ".to_string()));
     }
 }

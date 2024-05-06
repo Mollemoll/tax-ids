@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
+use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum VerificationStatus {
@@ -13,17 +14,20 @@ pub enum VerificationStatus {
 pub struct Verification {
     performed_at: DateTime<Local>,
     status: VerificationStatus,
+    data: HashMap<String, String>,
 }
 
 impl Verification {
-    pub fn new(status: VerificationStatus) -> Verification {
+    pub fn new(status: VerificationStatus, data: HashMap<String, String>) -> Verification {
         Verification {
             performed_at: Local::now(),
             status,
+            data,
         }
     }
 
     pub fn status(&self) -> &VerificationStatus { &self.status }
+    pub fn data(&self) -> &HashMap<String, String> { &self.data }
 }
 
 pub trait Verifier {
@@ -43,7 +47,10 @@ mod tests {
 
     #[test]
     fn test_new_verification() {
-        let verification = Verification::new(VerificationStatus::Verified);
+        let verification = Verification::new(
+            VerificationStatus::Verified,
+            HashMap::new(),
+        );
         assert_eq!(*verification.status(), VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
     }
@@ -56,8 +63,14 @@ mod tests {
         }
 
         fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
+            let mut hash = HashMap::new();
+            hash.insert("key".to_string(), "value".to_string());
+
             if response == "test" {
-                Ok(Verification::new(VerificationStatus::Verified))
+                Ok(Verification::new(
+                    VerificationStatus::Verified,
+                    hash
+                ))
             } else { panic!("Unexpected response") }
         }
     }
@@ -69,5 +82,6 @@ mod tests {
         let verification = verifier.verify(&tax_id).unwrap();
         assert_eq!(*verification.status(), VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
+        assert_eq!(verification.data().get("key").unwrap(), "value");
     }
 }
