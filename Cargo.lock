@@ -922,6 +922,7 @@ dependencies = [
  "regex",
  "reqwest",
  "roxmltree",
+ "serde_json",
 ]
 
 [[package]]
