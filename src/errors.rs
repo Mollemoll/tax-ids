@@ -25,14 +25,14 @@ impl Error for ValidationError {}
 #[derive(Debug)]
 pub enum VerificationError {
     HttpError(reqwest::Error),
-    ParsingError(roxmltree::Error),
+    XmlParsingError(roxmltree::Error),
 }
 
 impl fmt::Display for VerificationError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             VerificationError::HttpError(err) => write!(f, "HTTP client error: {}", err),
-            VerificationError::ParsingError(err) => write!(f, "Parsing error: {}", err),
+            VerificationError::XmlParsingError(err) => write!(f, "XML parsing error: {}", err),
         }
     }
 }
@@ -41,7 +41,7 @@ impl Error for VerificationError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             VerificationError::HttpError(err) => Some(err),
-            VerificationError::ParsingError(err) => Some(err),
+            VerificationError::XmlParsingError(err) => Some(err),
         }
     }
 }

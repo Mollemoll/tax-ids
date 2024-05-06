@@ -1,7 +1,6 @@
 use chrono::prelude::*;
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
-use std::collections::HashMap;
 
 #[derive(Debug, PartialEq)]
 pub enum VerificationStatus {
@@ -14,11 +13,11 @@ pub enum VerificationStatus {
 pub struct Verification {
     performed_at: DateTime<Local>,
     status: VerificationStatus,
-    data: HashMap<String, String>,
+    data: serde_json::Value,
 }
 
 impl Verification {
-    pub fn new(status: VerificationStatus, data: HashMap<String, String>) -> Verification {
+    pub fn new(status: VerificationStatus, data: serde_json::Value) -> Verification {
         Verification {
             performed_at: Local::now(),
             status,
@@ -27,7 +26,7 @@ impl Verification {
     }
 
     pub fn status(&self) -> &VerificationStatus { &self.status }
-    pub fn data(&self) -> &HashMap<String, String> { &self.data }
+    pub fn data(&self) -> &serde_json::Value { &self.data }
 }
 
 pub trait Verifier {
@@ -43,13 +42,14 @@ pub trait Verifier {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
     use super::*;
 
     #[test]
     fn test_new_verification() {
         let verification = Verification::new(
             VerificationStatus::Verified,
-            HashMap::new(),
+            json!({})
         );
         assert_eq!(*verification.status(), VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
@@ -63,13 +63,14 @@ mod tests {
         }
 
         fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
-            let mut hash = HashMap::new();
-            hash.insert("key".to_string(), "value".to_string());
+            let data = json!({
+                "key": "value"
+            });
 
             if response == "test" {
                 Ok(Verification::new(
                     VerificationStatus::Verified,
-                    hash
+                    data
                 ))
             } else { panic!("Unexpected response") }
         }

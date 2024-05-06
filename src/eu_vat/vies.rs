@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use roxmltree;
+use serde_json::json;
 use crate::verification::{Verifier, Verification, VerificationStatus};
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
@@ -22,14 +23,16 @@ pub struct VIES;
 impl VIES {
     fn xml_to_hash(xml: &roxmltree::Document) -> HashMap<String, String> {
         let mut hash = HashMap::new();
+        let tags_to_exclude = ["Body", "Envelope", "Fault"];
 
         for node in xml.descendants() {
             let tag_name = node.tag_name().name();
-            if tag_name.trim().is_empty() {
+            if tag_name.trim().is_empty() || tags_to_exclude.contains(&tag_name) {
                 continue;
             }
 
             if let Some(text) = node.text() {
+                // Absence of data is represented by "---" in VIES
                 if text == "---" {
                     hash.insert(tag_name.to_string(), "".to_string());
                 } else {
@@ -61,7 +64,7 @@ impl Verifier for VIES {
     }
 
     fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(&response).map_err(VerificationError::ParsingError)?;
+        let doc = roxmltree::Document::parse(&response).map_err(VerificationError::XmlParsingError)?;
         let hash = VIES::xml_to_hash(&doc);
         let fault = hash.get("faultcode");
 
@@ -69,7 +72,7 @@ impl Verifier for VIES {
             return Ok(
                 Verification::new(
                     VerificationStatus::Unavailable,
-                    hash
+                    json!(hash)
                 )
             );
         } else {
@@ -84,7 +87,7 @@ impl Verifier for VIES {
             Ok(
                 Verification::new(
                     verification_status,
-                    hash
+                    json!(hash)
                 )
             )
         }
@@ -186,7 +189,9 @@ mod tests {
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
         assert_eq!(*verification.status(), VerificationStatus::Unavailable);
-        assert_eq!(verification.data().get("faultcode"), Some(&"env:Server".to_string()));
-        assert_eq!(verification.data().get("faultstring"), Some(&"MS_MAX_CONCURRENT_REQ".to_string()));
+        assert_eq!(verification.data(), &json!({
+            "faultcode": "env:Server",
+            "faultstring": "MS_MAX_CONCURRENT_REQ"
+        }));
     }
 }
