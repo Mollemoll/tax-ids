@@ -21,7 +21,7 @@ static ENVELOPE: &'static str = "
 pub struct VIES;
 
 impl VIES {
-    fn xml_to_hash(xml: &roxmltree::Document) -> HashMap<String, String> {
+    fn xml_to_hash(xml: &roxmltree::Document) -> HashMap<String, Option<String>> {
         let mut hash = HashMap::new();
         let tags_to_exclude = ["Body", "Envelope", "Fault"];
 
@@ -34,9 +34,9 @@ impl VIES {
             if let Some(text) = node.text() {
                 // Absence of data is represented by "---" in VIES
                 if text == "---" {
-                    hash.insert(tag_name.to_string(), "".to_string());
+                    hash.insert(tag_name.to_string(), None);
                 } else {
-                    hash.insert(tag_name.to_string(), text.to_string());
+                    hash.insert(tag_name.to_string(), Some(text.to_string()));
                 }
             }
         }
@@ -77,7 +77,8 @@ impl Verifier for VIES {
             );
         } else {
             let verification_status = match hash.get("valid")
-                .expect("Missing valid field in VIES response")
+                .expect("Missing valid field in VIES response").clone()
+                .expect( "Empty value for valid field in VIES response")
                 .as_str() {
                     "true" => VerificationStatus::Verified,
                     "false" => VerificationStatus::Unverified,
@@ -118,12 +119,12 @@ mod tests {
         let doc = roxmltree::Document::parse(xml).unwrap();
         let hash = VIES::xml_to_hash(&doc);
 
-        assert_eq!(hash.get("countryCode"), Some(&"SE".to_string()));
-        assert_eq!(hash.get("vatNumber"), Some(&"123456789101".to_string()));
-        assert_eq!(hash.get("requestDate"), Some(&"2021-01-01+01:00".to_string()));
-        assert_eq!(hash.get("valid"), Some(&"true".to_string()));
-        assert_eq!(hash.get("name"), Some(&"Test Company".to_string()));
-        assert_eq!(hash.get("address"), Some(&"".to_string()));
+        assert_eq!(hash.get("countryCode"), Some(&Some("SE".to_string())));
+        assert_eq!(hash.get("vatNumber"), Some(&Some("123456789101".to_string())));
+        assert_eq!(hash.get("requestDate"), Some(&Some("2021-01-01+01:00".to_string())));
+        assert_eq!(hash.get("valid"), Some(&Some("true".to_string())));
+        assert_eq!(hash.get("name"), Some(&Some("Test Company".to_string())));
+        assert_eq!(hash.get("address"), Some(&None));
     }
 
     #[test]
