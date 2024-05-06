@@ -1,3 +1,5 @@
+mod hmrc;
+
 use regex::Regex;
 use crate::tax_id::TaxIdType;
 use crate::verification::Verifier;
@@ -19,7 +21,7 @@ impl TaxIdType for GBVat {
     }
 
     fn verifier(&self) -> Box<dyn Verifier> {
-        unimplemented!()
+        Box::new(hmrc::HMRC)
     }
 }
 
