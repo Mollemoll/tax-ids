@@ -26,6 +26,7 @@ impl Error for ValidationError {}
 pub enum VerificationError {
     HttpError(reqwest::Error),
     XmlParsingError(roxmltree::Error),
+    JSONParsingError(serde_json::Error),
 }
 
 impl fmt::Display for VerificationError {
@@ -33,6 +34,7 @@ impl fmt::Display for VerificationError {
         match self {
             VerificationError::HttpError(err) => write!(f, "HTTP client error: {}", err),
             VerificationError::XmlParsingError(err) => write!(f, "XML parsing error: {}", err),
+            VerificationError::JSONParsingError(err) => write!(f, "JSON parsing error: {}", err),
         }
     }
 }
@@ -42,6 +44,7 @@ impl Error for VerificationError {
         match self {
             VerificationError::HttpError(err) => Some(err),
             VerificationError::XmlParsingError(err) => Some(err),
+            VerificationError::JSONParsingError(err) => Some(err),
         }
     }
 }
