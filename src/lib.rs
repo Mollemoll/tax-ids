@@ -1,5 +1,5 @@
 mod tax_id;
-mod eu_vat;
-mod gb_vat;
 mod errors;
 mod verification;
+mod eu_vat;
+mod gb_vat;
