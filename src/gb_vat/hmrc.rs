@@ -104,8 +104,10 @@ mod tests {
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
         assert_eq!(*verification.status(), VerificationStatus::Unverified);
-        assert_eq!(verification.data().get("code").unwrap(), "NOT_FOUND");
-        assert_eq!(verification.data().get("reason").unwrap(), "targetVrn does not match a registered company");
+        assert_eq!(verification.data(), &json!({
+            "code": "NOT_FOUND",
+            "reason": "targetVrn does not match a registered company"
+        }));
     }
 
     #[test]
