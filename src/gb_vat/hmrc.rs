@@ -7,7 +7,7 @@ static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/v
 
 pub struct HMRC;
 
-impl Verifier for crate::gb_vat::hmrc::HMRC {
+impl Verifier for HMRC {
     fn make_request(&self, tax_id: &TaxId) -> Result<String, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let res = client
@@ -78,7 +78,7 @@ mod tests {
         let verifier = HMRC;
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
-        assert_eq!(*verification.status(), VerificationStatus::Verified);
+        assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.data(), &json!({
             "name": "VIRGIN ATLANTIC AIRWAYS LTD",
             "vatNumber": "425216184",
@@ -103,7 +103,7 @@ mod tests {
         let verifier = HMRC;
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
-        assert_eq!(*verification.status(), VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &VerificationStatus::Unverified);
         assert_eq!(verification.data(), &json!({
             "code": "NOT_FOUND",
             "reason": "targetVrn does not match a registered company"
@@ -119,7 +119,7 @@ mod tests {
         let verifier = HMRC;
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
-        assert_eq!(*verification.status(), VerificationStatus::Unavailable);
+        assert_eq!(verification.status(), &VerificationStatus::Unavailable);
         assert_eq!(verification.data().get("code").unwrap(), "SERVER_ERROR");
     }
 }
