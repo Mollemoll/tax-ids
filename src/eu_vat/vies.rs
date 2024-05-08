@@ -1,9 +1,9 @@
 use std::collections::HashMap;
+use anyhow::{bail, Result};
 use roxmltree;
 use serde_json::json;
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
 use crate::tax_id::TaxId;
-use crate::errors::VerificationError;
 
 // INFO(2024-05-08 mollemoll):
 // Data from VIES
@@ -50,7 +50,7 @@ impl VIES {
 }
 
 impl Verifier for VIES {
-    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse> {
         let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
             .replace("{country}", tax_id.tax_country_code())
@@ -59,19 +59,18 @@ impl Verifier for VIES {
             .post(URI)
             .header("Content-Type", "text/xml")
             .body(body)
-            .send()
-            .map_err(VerificationError::HttpError)?;
+            .send()?;
 
         Ok(
             VerificationResponse::new(
                 res.status().as_u16(),
-                res.text().map_err(VerificationError::HttpError)?
+                res.text()?
             )
         )
     }
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification> {
+        let doc = roxmltree::Document::parse(response.body())?;
         let hash = VIES::xml_to_hash(&doc);
         let fault_string = hash.get("faultstring")
             .and_then(|x| x.as_deref());
@@ -85,16 +84,8 @@ impl Verifier for VIES {
                 match validity_value {
                     Some("true") => VerificationStatus::Verified,
                     Some("false") => VerificationStatus::Unverified,
-                    None => return Err(
-                        VerificationError::UnexpectedResponse(
-                            "Missing valid field in VIES response".to_string()
-                        )
-                    ),
-                    Some(_) => return Err(
-                        VerificationError::UnexpectedResponse(
-                            "Invalid value for valid field in VIES response".to_string()
-                        )
-                    )
+                    None => bail!("Missing valid field in VIES response"),
+                    Some(_) => bail!("Invalid value for valid field in VIES response"),
                 }
             }
         };
@@ -236,12 +227,8 @@ mod tests {
         let verifier = VIES;
         let verification = verifier.parse_response(response);
 
-        match verification {
-            Err(VerificationError::UnexpectedResponse(msg)) => {
-                assert_eq!(msg, "Missing valid field in VIES response");
-            }
-            _ => panic!("Expected UnexpectedResponse error"),
-        }
+        assert!(verification.is_err());
+        assert_eq!(verification.unwrap_err().to_string(), "Missing valid field in VIES response")
     }
 
     #[test]
@@ -262,11 +249,7 @@ mod tests {
         let verifier = VIES;
         let verification = verifier.parse_response(response);
 
-        match verification {
-            Err(VerificationError::UnexpectedResponse(msg)) => {
-                assert_eq!(msg, "Invalid value for valid field in VIES response");
-            }
-            _ => panic!("Expected UnexpectedResponse error"),
-        }
+        assert!(verification.is_err());
+        assert_eq!(verification.unwrap_err().to_string(), "Invalid value for valid field in VIES response")
     }
 }

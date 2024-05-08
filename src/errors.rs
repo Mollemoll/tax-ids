@@ -21,9 +21,6 @@ pub enum VerificationError {
     #[error("JSON parsing error: {0}")]
     JSONParsingError(#[source] serde_json::Error),
 
-    #[error("Unexpected response: {0}")]
-    UnexpectedResponse(String),
-
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }

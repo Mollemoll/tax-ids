@@ -1,6 +1,6 @@
 use chrono::prelude::*;
+use anyhow::Result;
 use crate::tax_id::TaxId;
-use crate::errors::VerificationError;
 
 pub struct VerificationResponse {
     status: u16,
@@ -47,14 +47,14 @@ impl Verification {
 }
 
 pub trait Verifier {
-    fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
+    fn verify(&self, tax_id: &TaxId) -> Result<Verification> {
         let response = self.make_request(tax_id)?;
         let verification = self.parse_response(response)?;
         Ok(verification)
     }
-    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError>;
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse>;
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError>;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification>;
 }
 
 #[cfg(test)]
@@ -75,14 +75,14 @@ mod tests {
     struct TestVerifier;
 
     impl Verifier for TestVerifier {
-        fn make_request(&self, _tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
+        fn make_request(&self, _tax_id: &TaxId) -> Result<VerificationResponse> {
             Ok(VerificationResponse::new(
                 200,
                 "test".to_string()
             ))
         }
 
-        fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
+        fn parse_response(&self, response: VerificationResponse) -> Result<Verification> {
             let data = json!({
                 "key": "value"
             });

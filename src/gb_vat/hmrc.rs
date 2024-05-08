@@ -1,5 +1,5 @@
+use anyhow::Result;
 use serde_json::json;
-use crate::errors::VerificationError;
 use crate::tax_id::TaxId;
 use crate::verification::{Verification, VerificationResponse, VerificationStatus, Verifier};
 
@@ -13,25 +13,23 @@ static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/v
 pub struct HMRC;
 
 impl Verifier for HMRC {
-    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse> {
         let client = reqwest::blocking::Client::new();
         let res = client
             .get(format!("{}/{}", BASE_URI, tax_id.local_value()))
             .header("Accept", "application/vnd.hmrc.1.0+json")
-            .send()
-            .map_err(VerificationError::HttpError)?;
+            .send()?;
 
         Ok(
             VerificationResponse::new(
                 res.status().as_u16(),
-                res.text().map_err(VerificationError::HttpError)?
+                res.text()?
             )
         )
     }
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
-        let v: serde_json::Value = serde_json::from_str(response.body())
-            .map_err(VerificationError::JSONParsingError)?;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification> {
+        let v: serde_json::Value = serde_json::from_str(response.body())?;
         let hash = v.as_object().unwrap();
         let fault = hash.get("code").and_then(|v| v.as_str());
 

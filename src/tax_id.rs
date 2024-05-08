@@ -1,8 +1,9 @@
+use anyhow::Result;
 use std::fmt;
 use crate::ch_vat::CHVat;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
-use crate::errors::{ValidationError, VerificationError};
+use crate::errors::{ValidationError};
 use crate::eu_vat;
 use crate::verification::{Verification, Verifier};
 
@@ -11,8 +12,8 @@ pub trait TaxIdType {
     fn ensure_valid_syntax(&self, value: &str) -> bool;
     fn country_code_from(&self, tax_country_code: &str) -> String;
     fn verifier(&self) -> Box<dyn Verifier>;
-    fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
-        self.verifier().verify(tax_id)
+    fn verify(&self, tax_id: &TaxId) -> Result<Verification> {
+        Ok(self.verifier().verify(tax_id)?)
     }
 }
 
@@ -55,8 +56,8 @@ impl TaxId {
         }
     }
 
-    pub fn verify(&self) -> Result<Verification, VerificationError> {
-        self.id_type.verifier().verify(self)
+    pub fn verify(&self) -> Result<Verification> {
+        Ok(self.id_type.verifier().verify(self)?)
     }
 
     pub fn value(&self) -> &str { &self.value }

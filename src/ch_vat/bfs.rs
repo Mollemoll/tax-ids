@@ -1,11 +1,12 @@
 use std::collections::HashMap;
+use anyhow::bail;
+use anyhow::Result;
 use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
 use roxmltree;
 use serde_json::json;
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
 use crate::tax_id::TaxId;
-use crate::errors::VerificationError;
 
 // INFO(2024-05-07 mollemoll):
 // https://www.bfs.admin.ch/bfs/en/home/registers/enterprise-register/enterprise-identification/uid-register/uid-interfaces.html#-125185306
@@ -69,7 +70,7 @@ impl BFS {
 }
 
 impl Verifier for BFS {
-    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse> {
         let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
             .replace("{value}", tax_id.value());
@@ -77,19 +78,18 @@ impl Verifier for BFS {
             .post(URI)
             .headers(HEADERS.clone())
             .body(body)
-            .send()
-            .map_err(VerificationError::HttpError)?;
+            .send()?;
 
         Ok(
             VerificationResponse::new(
                 res.status().as_u16(),
-                res.text().map_err(VerificationError::HttpError)?
+                res.text()?
             )
         )
     }
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification> {
+        let doc = roxmltree::Document::parse(response.body())?;
         let hash = BFS::xml_to_hash(&doc);
         let fault_string = hash.get("faultstring")
             .and_then(|x| x.as_deref());
@@ -97,17 +97,13 @@ impl Verifier for BFS {
         let status = match fault_string {
             Some("Data_validation_failed") => VerificationStatus::Unverified,
             Some("Request_limit_exceeded") => VerificationStatus::Unavailable,
-            Some(_) => return Err(VerificationError::UnexpectedResponse(
-                format!("Unexpected faultstring: {}", fault_string.unwrap().to_string())
-            )),
+            Some(_) => bail!("Unexpected faultstring: {}", fault_string.unwrap().to_string()),
             None => {
                 let result = hash.get("ValidateVatNumberResult").and_then(|x| x.as_deref());
                 match result {
                     Some("true") => VerificationStatus::Verified,
                     Some("false") => VerificationStatus::Unverified,
-                    None | Some(_) => return Err(VerificationError::UnexpectedResponse(
-                        "ValidateVatNumberResult should be 'true' or 'false'".to_string()
-                    )),
+                    None | Some(_) => bail!("ValidateVatNumberResult should be 'true' or 'false'".to_string()),
                 }
             },
         };
@@ -240,12 +236,8 @@ mod tests {
         let verifier = BFS;
         let verification = verifier.parse_response(response);
 
-        match verification {
-            Err(VerificationError::UnexpectedResponse(msg)) => {
-                assert_eq!(msg, "Unexpected faultstring: Unexpected_fault_string");
-            }
-            _ => panic!("Expected UnexpectedResponse error"),
-        }
+        assert!(verification.is_err());
+        assert_eq!(verification.unwrap_err().to_string(), "Unexpected faultstring: Unexpected_fault_string".to_string())
     }
 
     #[test]
@@ -266,12 +258,8 @@ mod tests {
         let verifier = BFS;
         let verification = verifier.parse_response(response);
 
-        match verification {
-            Err(VerificationError::UnexpectedResponse(msg)) => {
-                assert_eq!(msg, "ValidateVatNumberResult should be 'true' or 'false'");
-            }
-            _ => panic!("Expected UnexpectedResponse error"),
-        }
+        assert!(verification.is_err());
+        assert_eq!(verification.unwrap_err().to_string(), "ValidateVatNumberResult should be 'true' or 'false'".to_string())
     }
 
     #[test]
@@ -292,11 +280,7 @@ mod tests {
         let verifier = BFS;
         let verification = verifier.parse_response(response);
 
-        match verification {
-            Err(VerificationError::UnexpectedResponse(msg)) => {
-                assert_eq!(msg, "ValidateVatNumberResult should be 'true' or 'false'");
-            }
-            _ => panic!("Expected UnexpectedResponse error"),
-        }
+        assert!(verification.is_err());
+        assert_eq!(verification.unwrap_err().to_string(), "ValidateVatNumberResult should be 'true' or 'false'".to_string())
     }
 }
