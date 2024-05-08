@@ -66,32 +66,38 @@ impl Verifier for VIES {
     fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
         let doc = roxmltree::Document::parse(&response).map_err(VerificationError::XmlParsingError)?;
         let hash = VIES::xml_to_hash(&doc);
-        let fault = hash.get("faultcode");
+        let fault_string = hash.get("faultstring")
+            .and_then(|x| x.as_deref());
 
-        if fault.is_some() {
-            return Ok(
-                Verification::new(
-                    VerificationStatus::Unavailable,
-                    json!(hash)
-                )
-            );
-        } else {
-            let verification_status = match hash.get("valid")
-                .expect("Missing valid field in VIES response").clone()
-                .expect( "Empty value for valid field in VIES response")
-                .as_str() {
-                    "true" => VerificationStatus::Verified,
-                    "false" => VerificationStatus::Unverified,
-                    _ => panic!("Invalid value for valid field in VIES response")
-                };
+        let verification_status = match fault_string {
+            Some(_) => VerificationStatus::Unavailable,
+            None => {
+                let validity_value = hash.get("valid")
+                    .and_then(|x| x.as_deref());
 
-            Ok(
-                Verification::new(
-                    verification_status,
-                    json!(hash)
-                )
+                match validity_value {
+                    Some("true") => VerificationStatus::Verified,
+                    Some("false") => VerificationStatus::Unverified,
+                    None => return Err(
+                        VerificationError::UnexpectedResponse(
+                            "Missing valid field in VIES response".to_string()
+                        )
+                    ),
+                    Some(_) => return Err(
+                        VerificationError::UnexpectedResponse(
+                            "Invalid value for valid field in VIES response".to_string()
+                        )
+                    )
+                }
+            }
+        };
+
+        Ok(
+            Verification::new(
+                verification_status,
+                json!(hash)
             )
-        }
+        )
     }
 }
 
@@ -194,5 +200,51 @@ mod tests {
             "faultcode": "env:Server",
             "faultstring": "MS_MAX_CONCURRENT_REQ"
         }));
+    }
+
+    #[test]
+    fn test_parse_response_missing_valid_field() {
+        let response = r#"
+            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
+                <soapenv:Header/>
+                <soapenv:Body>
+                    <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                        <countryCode>SE</countryCode>
+                    </checkVat>
+                </soapenv:Body>
+            </soapenv:Envelope>
+        "#;
+        let verifier = VIES;
+        let verification = verifier.parse_response(response.to_string());
+
+        match verification {
+            Err(VerificationError::UnexpectedResponse(msg)) => {
+                assert_eq!(msg, "Missing valid field in VIES response");
+            }
+            _ => panic!("Expected UnexpectedResponse error"),
+        }
+    }
+
+    #[test]
+    fn test_parse_response_invalid_validity_value() {
+        let response = r#"
+            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
+                <soapenv:Header/>
+                <soapenv:Body>
+                    <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                        <valid>invalid value</valid>
+                    </checkVat>
+                </soapenv:Body>
+            </soapenv:Envelope>
+        "#;
+        let verifier = VIES;
+        let verification = verifier.parse_response(response.to_string());
+
+        match verification {
+            Err(VerificationError::UnexpectedResponse(msg)) => {
+                assert_eq!(msg, "Invalid value for valid field in VIES response");
+            }
+            _ => panic!("Expected UnexpectedResponse error"),
+        }
     }
 }

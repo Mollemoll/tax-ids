@@ -27,6 +27,7 @@ pub enum VerificationError {
     HttpError(reqwest::Error),
     XmlParsingError(roxmltree::Error),
     JSONParsingError(serde_json::Error),
+    UnexpectedResponse(String),
 }
 
 impl fmt::Display for VerificationError {
@@ -35,6 +36,7 @@ impl fmt::Display for VerificationError {
             VerificationError::HttpError(err) => write!(f, "HTTP client error: {}", err),
             VerificationError::XmlParsingError(err) => write!(f, "XML parsing error: {}", err),
             VerificationError::JSONParsingError(err) => write!(f, "JSON parsing error: {}", err),
+            VerificationError::UnexpectedResponse(msg) => write!(f, "Unexpected response: {}", msg),
         }
     }
 }
@@ -45,6 +47,7 @@ impl Error for VerificationError {
             VerificationError::HttpError(err) => Some(err),
             VerificationError::XmlParsingError(err) => Some(err),
             VerificationError::JSONParsingError(err) => Some(err),
+            VerificationError::UnexpectedResponse(_) => None,
         }
     }
 }
