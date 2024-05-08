@@ -2,6 +2,23 @@ use chrono::prelude::*;
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
 
+pub struct VerificationResponse {
+    status: u16,
+    body: String,
+}
+
+impl VerificationResponse {
+    pub fn new(status: u16, body: String) -> VerificationResponse {
+        VerificationResponse {
+            status,
+            body,
+        }
+    }
+
+    pub fn status(&self) -> u16 { self.status }
+    pub fn body(&self) -> &str { &self.body }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum VerificationStatus {
     Verified,
