@@ -1,3 +1,4 @@
+use crate::ch_vat::CHVat;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
 use crate::errors::{ValidationError, VerificationError};
@@ -29,6 +30,7 @@ impl TaxId {
 
         let id_type: Box<dyn TaxIdType> = match tax_country_code {
             "GB" => Box::new(GBVat),
+            "CH" => Box::new(CHVat),
             _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EUVat),
             _ => return Err(ValidationError::new("Unknown country code")),
         };
