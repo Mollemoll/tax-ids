@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
 use roxmltree;
 use serde_json::json;
-use crate::verification::{Verifier, Verification, VerificationStatus};
+use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
 
@@ -69,7 +69,7 @@ impl BFS {
 }
 
 impl Verifier for BFS {
-    fn make_request(&self, tax_id: &TaxId) -> Result<String, VerificationError> {
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
             .replace("{value}", tax_id.value());
@@ -78,15 +78,18 @@ impl Verifier for BFS {
             .headers(HEADERS.clone())
             .body(body)
             .send()
-            .map_err(VerificationError::HttpError)?
-            .text()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(res)
+        Ok(
+            VerificationResponse::new(
+                res.status().as_u16(),
+                res.text().map_err(VerificationError::HttpError)?
+            )
+        )
     }
 
-    fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(&response).map_err(VerificationError::XmlParsingError)?;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
+        let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
         let hash = BFS::xml_to_hash(&doc);
         let fault_string = hash.get("faultstring")
             .and_then(|x| x.as_deref());
@@ -136,18 +139,21 @@ mod tests {
 
     #[test]
     fn test_parse_response_verified() {
-        let response = r#"
-            <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-                <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-                    <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
-                        <ValidateVatNumberResult>true</ValidateVatNumberResult>
-                    </ValidateVatNumberResponse>
-                </s:Body>
-            </s:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+                    <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
+                            <ValidateVatNumberResult>true</ValidateVatNumberResult>
+                        </ValidateVatNumberResponse>
+                    </s:Body>
+                </s:Envelope>
+            "#.to_string()
+        );
 
         let verifier = BFS;
-        let verification = verifier.parse_response(response.to_string()).unwrap();
+        let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.data(), &json!({
@@ -157,18 +163,21 @@ mod tests {
 
     #[test]
     fn test_parse_response_unverified() {
-        let response = r#"
-            <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-                <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-                    <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
-                        <ValidateVatNumberResult>false</ValidateVatNumberResult>
-                    </ValidateVatNumberResponse>
-                </s:Body>
-            </s:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+                    <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
+                            <ValidateVatNumberResult>false</ValidateVatNumberResult>
+                        </ValidateVatNumberResponse>
+                    </s:Body>
+                </s:Envelope>
+            "#.to_string()
+        );
 
         let verifier = BFS;
-        let verification = verifier.parse_response(response.to_string()).unwrap();
+        let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
         assert_eq!(verification.data(), &json!({
@@ -178,26 +187,29 @@ mod tests {
 
     #[test]
     fn test_parse_response_unavailable() {
-        let response = r#"
-            <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-                <s:Body>
-                    <s:Fault>
-                        <faultcode>s:Client</faultcode>
-                        <faultstring xml:lang="de-CH">Request_limit_exceeded</faultstring>
-                        <detail>
-                            <businessFault xmlns="http://www.uid.admin.ch/xmlns/uid-wse" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-                                <operation xmlns="http://www.uid.admin.ch/xmlns/uid-wse-shared/2">ValidateVatNumber</operation>
-                                <error xmlns="http://www.uid.admin.ch/xmlns/uid-wse-shared/2">Request_limit_exceeded</error>
-                                <errorDetail xmlns="http://www.uid.admin.ch/xmlns/uid-wse-shared/2">Maximum number of 20 requests per 1 minute(s) exceeded</errorDetail>
-                            </businessFault>
-                        </detail>
-                    </s:Fault>
-                </s:Body>
-            </s:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            500,
+            r#"
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+                    <s:Body>
+                        <s:Fault>
+                            <faultcode>s:Client</faultcode>
+                            <faultstring xml:lang="de-CH">Request_limit_exceeded</faultstring>
+                            <detail>
+                                <businessFault xmlns="http://www.uid.admin.ch/xmlns/uid-wse" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+                                    <operation xmlns="http://www.uid.admin.ch/xmlns/uid-wse-shared/2">ValidateVatNumber</operation>
+                                    <error xmlns="http://www.uid.admin.ch/xmlns/uid-wse-shared/2">Request_limit_exceeded</error>
+                                    <errorDetail xmlns="http://www.uid.admin.ch/xmlns/uid-wse-shared/2">Maximum number of 20 requests per 1 minute(s) exceeded</errorDetail>
+                                </businessFault>
+                            </detail>
+                        </s:Fault>
+                    </s:Body>
+                </s:Envelope>
+            "#.to_string()
+        );
 
         let verifier = BFS;
-        let verification = verifier.parse_response(response.to_string()).unwrap();
+        let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unavailable);
         assert_eq!(verification.data(), &json!({
@@ -211,19 +223,22 @@ mod tests {
 
     #[test]
     fn test_parse_response_unavailable_unexpected_faultstring() {
-        let response = r#"
-            <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-                <s:Body>
-                    <s:Fault>
-                        <faultcode>s:Client</faultcode>
-                        <faultstring xml:lang="de-CH">Unexpected_fault_string</faultstring>
-                    </s:Fault>
-                </s:Body>
-            </s:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            500,
+            r#"
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+                    <s:Body>
+                        <s:Fault>
+                            <faultcode>s:Client</faultcode>
+                            <faultstring xml:lang="de-CH">Unexpected_fault_string</faultstring>
+                        </s:Fault>
+                    </s:Body>
+                </s:Envelope>
+            "#.to_string()
+        );
 
         let verifier = BFS;
-        let verification = verifier.parse_response(response.to_string());
+        let verification = verifier.parse_response(response);
 
         match verification {
             Err(VerificationError::UnexpectedResponse(msg)) => {
@@ -235,18 +250,21 @@ mod tests {
 
     #[test]
     fn test_parse_response_unexpected_response_value() {
-        let response = r#"
-            <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-                <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-                    <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
-                        <ValidateVatNumberResult>unexpected value</ValidateVatNumberResult>
-                    </ValidateVatNumberResponse>
-                </s:Body>
-            </s:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+                    <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
+                            <ValidateVatNumberResult>unexpected value</ValidateVatNumberResult>
+                        </ValidateVatNumberResponse>
+                    </s:Body>
+                </s:Envelope>
+            "#.to_string()
+        );
 
         let verifier = BFS;
-        let verification = verifier.parse_response(response.to_string());
+        let verification = verifier.parse_response(response);
 
         match verification {
             Err(VerificationError::UnexpectedResponse(msg)) => {
@@ -258,18 +276,21 @@ mod tests {
 
     #[test]
     fn test_parse_response_empty_response_value() {
-        let response = r#"
-            <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
-                <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
-                    <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
-                        <ValidateVatNumberResult></ValidateVatNumberResult>
-                    </ValidateVatNumberResponse>
-                </s:Body>
-            </s:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/">
+                    <s:Body xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+                        <ValidateVatNumberResponse xmlns="http://www.uid.admin.ch/xmlns/uid-wse">
+                            <ValidateVatNumberResult></ValidateVatNumberResult>
+                        </ValidateVatNumberResponse>
+                    </s:Body>
+                </s:Envelope>
+            "#.to_string()
+        );
 
         let verifier = BFS;
-        let verification = verifier.parse_response(response.to_string());
+        let verification = verifier.parse_response(response);
 
         match verification {
             Err(VerificationError::UnexpectedResponse(msg)) => {

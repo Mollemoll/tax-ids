@@ -1,9 +1,13 @@
 use std::collections::HashMap;
 use roxmltree;
 use serde_json::json;
-use crate::verification::{Verifier, Verification, VerificationStatus};
+use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
+
+// INFO(2024-05-08 mollemoll):
+// Data from VIES
+// https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 
 static URI: &'static str = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
 static ENVELOPE: &'static str = "
@@ -46,7 +50,7 @@ impl VIES {
 }
 
 impl Verifier for VIES {
-    fn make_request(&self, tax_id: &TaxId) -> Result<String, VerificationError> {
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
             .replace("{country}", tax_id.tax_country_code())
@@ -56,15 +60,18 @@ impl Verifier for VIES {
             .header("Content-Type", "text/xml")
             .body(body)
             .send()
-            .map_err(VerificationError::HttpError)?
-            .text()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(res)
+        Ok(
+            VerificationResponse::new(
+                res.status().as_u16(),
+                res.text().map_err(VerificationError::HttpError)?
+            )
+        )
     }
 
-    fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(&response).map_err(VerificationError::XmlParsingError)?;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
+        let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
         let hash = VIES::xml_to_hash(&doc);
         let fault_string = hash.get("faultstring")
             .and_then(|x| x.as_deref());
@@ -135,65 +142,74 @@ mod tests {
 
     #[test]
     fn test_parse_response_verified() {
-        let response = r#"
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
-                <soapenv:Header/>
-                <soapenv:Body>
-                    <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
-                        <countryCode>SE</countryCode>
-                        <vatNumber>123456789101</vatNumber>
-                        <requestDate>2021-01-01+01:00</requestDate>
-                        <valid>true</valid>
-                        <name>Test Company</name>
-                        <address>Test Address</address>
-                    </checkVat>
-                </soapenv:Body>
-            </soapenv:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
+                        <soapenv:Header/>
+                        <soapenv:Body>
+                            <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                                <countryCode>SE</countryCode>
+                                <vatNumber>123456789101</vatNumber>
+                                <requestDate>2021-01-01+01:00</requestDate>
+                                <valid>true</valid>
+                                <name>Test Company</name>
+                                <address>Test Address</address>
+                            </checkVat>
+                        </soapenv:Body>
+                    </soapenv:Envelope>
+                "#.to_string()
+        );
         let verifier = VIES;
-        let verification = verifier.parse_response(response.to_string()).unwrap();
+        let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Verified);
     }
 
     #[test]
     fn test_parse_response_unverified() {
-        let response = r#"
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
-                <soapenv:Header/>
-                <soapenv:Body>
-                    <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
-                        <countryCode>SE</countryCode>
-                        <vatNumber>123456789101</vatNumber>
-                        <requestDate>2021-01-01+01:00</requestDate>
-                        <valid>false</valid>
-                        <name>Test Company</name>
-                        <address>Test Address</address>
-                    </checkVat>
-                </soapenv:Body>
-            </soapenv:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
+                    <soapenv:Header/>
+                    <soapenv:Body>
+                        <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                            <countryCode>SE</countryCode>
+                            <vatNumber>123456789101</vatNumber>
+                            <requestDate>2021-01-01+01:00</requestDate>
+                            <valid>false</valid>
+                            <name>Test Company</name>
+                            <address>Test Address</address>
+                        </checkVat>
+                    </soapenv:Body>
+                </soapenv:Envelope>
+            "#.to_string()
+        );
         let verifier = VIES;
-        let verification = verifier.parse_response(response.to_string()).unwrap();
+        let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
     }
 
     #[test]
     fn test_parse_response_unavailable() {
-        let response = r#"
-            <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
-                <env:Header/>
-                <env:Body>
-                    <env:Fault>
-                        <faultcode>env:Server</faultcode>
-                        <faultstring>MS_MAX_CONCURRENT_REQ</faultstring>
-                    </env:Fault>
-                </env:Body>
-            </env:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+                    <env:Header/>
+                    <env:Body>
+                        <env:Fault>
+                            <faultcode>env:Server</faultcode>
+                            <faultstring>MS_MAX_CONCURRENT_REQ</faultstring>
+                        </env:Fault>
+                    </env:Body>
+                </env:Envelope>
+            "#.to_string()
+        );
         let verifier = VIES;
-        let verification = verifier.parse_response(response.to_string()).unwrap();
+        let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unavailable);
         assert_eq!(verification.data(), &json!({
@@ -204,18 +220,21 @@ mod tests {
 
     #[test]
     fn test_parse_response_missing_valid_field() {
-        let response = r#"
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
-                <soapenv:Header/>
-                <soapenv:Body>
-                    <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
-                        <countryCode>SE</countryCode>
-                    </checkVat>
-                </soapenv:Body>
-            </soapenv:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
+                    <soapenv:Header/>
+                    <soapenv:Body>
+                        <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                            <countryCode>SE</countryCode>
+                        </checkVat>
+                    </soapenv:Body>
+                </soapenv:Envelope>
+            "#.to_string()
+        );
         let verifier = VIES;
-        let verification = verifier.parse_response(response.to_string());
+        let verification = verifier.parse_response(response);
 
         match verification {
             Err(VerificationError::UnexpectedResponse(msg)) => {
@@ -227,18 +246,21 @@ mod tests {
 
     #[test]
     fn test_parse_response_invalid_validity_value() {
-        let response = r#"
-            <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
-                <soapenv:Header/>
-                <soapenv:Body>
-                    <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
-                        <valid>invalid value</valid>
-                    </checkVat>
-                </soapenv:Body>
-            </soapenv:Envelope>
-        "#;
+        let response = VerificationResponse::new(
+            200,
+            r#"
+                <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v1="http://schemas.conversesolutions.com/xsd/dmticta/v1">
+                    <soapenv:Header/>
+                    <soapenv:Body>
+                        <checkVat xmlns="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+                            <valid>invalid value</valid>
+                        </checkVat>
+                    </soapenv:Body>
+                </soapenv:Envelope>
+            "#.to_string()
+        );
         let verifier = VIES;
-        let verification = verifier.parse_response(response.to_string());
+        let verification = verifier.parse_response(response);
 
         match verification {
             Err(VerificationError::UnexpectedResponse(msg)) => {
