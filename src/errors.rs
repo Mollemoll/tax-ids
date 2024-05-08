@@ -1,53 +1,37 @@
 use std::error::Error;
-use std::fmt;
+use std::fmt::Debug;
 
-#[derive(Debug)]
-pub struct ValidationError {
-    pub message: String,
+#[derive(thiserror::Error, Debug, PartialEq)]
+pub enum ValidationError {
+    #[error("Country code {0} is not supported")]
+    UnknownCountryCode(String),
+
+    #[error("Invalid syntax")]
+    InvalidSyntax,
 }
 
-impl ValidationError {
-    pub fn new(message: &str) -> ValidationError {
-        ValidationError {
-            message: message.to_string(),
-        }
-    }
-}
-
-impl fmt::Display for ValidationError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.message)
-    }
-}
-
-impl Error for ValidationError {}
-
-#[derive(Debug)]
+#[derive(thiserror::Error)]
 pub enum VerificationError {
-    HttpError(reqwest::Error),
-    XmlParsingError(roxmltree::Error),
-    JSONParsingError(serde_json::Error),
+    #[error("HTTP client error: {0}")]
+    HttpError(#[from] reqwest::Error),
+
+    #[error("XML parsing error: {0}")]
+    XmlParsingError(#[from] roxmltree::Error),
+
+    #[error("JSON parsing error: {0}")]
+    JSONParsingError(#[source] serde_json::Error),
+
+    #[error("Unexpected response: {0}")]
     UnexpectedResponse(String),
 }
 
-impl fmt::Display for VerificationError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            VerificationError::HttpError(err) => write!(f, "HTTP client error: {}", err),
-            VerificationError::XmlParsingError(err) => write!(f, "XML parsing error: {}", err),
-            VerificationError::JSONParsingError(err) => write!(f, "JSON parsing error: {}", err),
-            VerificationError::UnexpectedResponse(msg) => write!(f, "Unexpected response: {}", msg),
+impl Debug for VerificationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{}", self)?;
+        if let Some(source) = self.source() {
+            writeln!(f, "Caused by:\n\t{}", source)?;
         }
+        Ok(())
     }
 }
 
-impl Error for VerificationError {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        match self {
-            VerificationError::HttpError(err) => Some(err),
-            VerificationError::XmlParsingError(err) => Some(err),
-            VerificationError::JSONParsingError(err) => Some(err),
-            VerificationError::UnexpectedResponse(_) => None,
-        }
-    }
-}

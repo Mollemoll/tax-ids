@@ -1,3 +1,4 @@
+use std::fmt;
 use crate::ch_vat::CHVat;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
@@ -23,6 +24,13 @@ pub struct TaxId {
     id_type: Box<dyn TaxIdType>,
 }
 
+impl fmt::Debug for TaxId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "TaxId {{ value: {}, country_code: {}, tax_country_code: {}, local_value: {}, id_type: {}}}",
+               self.value, self.country_code, self.tax_country_code, self.local_value, self.id_type.name())
+    }
+}
+
 impl TaxId {
     pub fn new(value: &str) -> Result<TaxId, ValidationError> {
         let tax_country_code = &value[0..2];
@@ -32,11 +40,11 @@ impl TaxId {
             "GB" => Box::new(GBVat),
             "CH" => Box::new(CHVat),
             _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EUVat),
-            _ => return Err(ValidationError::new("Unknown country code")),
+            _ => return Err(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
         };
 
         match id_type.ensure_valid_syntax(value) {
-            false => Err(ValidationError::new("Invalid syntax")),
+            false => Err(ValidationError::InvalidSyntax),
             true => Ok(TaxId {
                 country_code: id_type.country_code_from(tax_country_code),
                 value: value.to_string(),
@@ -99,14 +107,16 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Unknown country code")]
-    fn test_new_unknown_country_code() {
-        let _ = TaxId::new("XX123456789").unwrap();
+    fn test_new_unknown_country_code_err() {
+        let tax_id = TaxId::new("XX123456789");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::UnknownCountryCode("XX".to_string()));
     }
 
     #[test]
-    #[should_panic(expected = "Invalid syntax")]
     fn test_failed_validation() {
-        let _ = TaxId::new("SE12").unwrap();
+        let tax_id = TaxId::new("SE12");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
     }
 }
