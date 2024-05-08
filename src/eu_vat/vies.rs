@@ -147,7 +147,7 @@ mod tests {
         let verifier = VIES;
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
-        assert_eq!(*verification.status(), VerificationStatus::Verified);
+        assert_eq!(verification.status(), &VerificationStatus::Verified);
     }
 
     #[test]
@@ -170,7 +170,7 @@ mod tests {
         let verifier = VIES;
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
-        assert_eq!(*verification.status(), VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &VerificationStatus::Unverified);
     }
 
     #[test]
@@ -189,7 +189,7 @@ mod tests {
         let verifier = VIES;
         let verification = verifier.parse_response(response.to_string()).unwrap();
 
-        assert_eq!(*verification.status(), VerificationStatus::Unavailable);
+        assert_eq!(verification.status(), &VerificationStatus::Unavailable);
         assert_eq!(verification.data(), &json!({
             "faultcode": "env:Server",
             "faultstring": "MS_MAX_CONCURRENT_REQ"

@@ -51,7 +51,7 @@ mod tests {
             VerificationStatus::Verified,
             json!({})
         );
-        assert_eq!(*verification.status(), VerificationStatus::Verified);
+        assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
     }
 
@@ -81,7 +81,7 @@ mod tests {
         let tax_id = TaxId::new("SE123456789101").unwrap();
         let verifier = TestVerifier;
         let verification = verifier.verify(&tax_id).unwrap();
-        assert_eq!(*verification.status(), VerificationStatus::Verified);
+        assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
         assert_eq!(verification.data().get("key").unwrap(), "value");
     }
