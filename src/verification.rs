@@ -48,13 +48,13 @@ impl Verification {
 
 pub trait Verifier {
     fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
-        let request = self.make_request(tax_id)?;
-        let verification = self.parse_response(request)?;
+        let response = self.make_request(tax_id)?;
+        let verification = self.parse_response(response)?;
         Ok(verification)
     }
-    fn make_request(&self, tax_id: &TaxId) -> Result<String, VerificationError>;
+    fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError>;
 
-    fn parse_response(&self, _response: String) -> Result<Verification, VerificationError>;
+    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError>;
 }
 
 #[cfg(test)]
@@ -75,16 +75,19 @@ mod tests {
     struct TestVerifier;
 
     impl Verifier for TestVerifier {
-        fn make_request(&self, _tax_id: &TaxId) -> Result<String, VerificationError> {
-            Ok("test".to_string())
+        fn make_request(&self, _tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
+            Ok(VerificationResponse::new(
+                200,
+                "test".to_string()
+            ))
         }
 
-        fn parse_response(&self, response: String) -> Result<Verification, VerificationError> {
+        fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
             let data = json!({
                 "key": "value"
             });
 
-            if response == "test" {
+            if response.status() == 200 && response.body() == "test" {
                 Ok(Verification::new(
                     VerificationStatus::Verified,
                     data
