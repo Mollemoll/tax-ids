@@ -1,4 +1,6 @@
 mod brreg;
+mod translator;
+
 use regex::Regex;
 use crate::tax_id::{TaxId, TaxIdType};
 use crate::verification::Verifier;
