@@ -113,7 +113,18 @@ mod tests {
                 "registrertIMvaregisteret": true,
                 "konkurs": false,
                 "underAvvikling": false,
-                "underTvangsavviklingEllerTvangsopplosning": false
+                "underTvangsavviklingEllerTvangsopplosning": false,
+                "forretningsadresse": {
+                    "land": "Norge",
+                    "landkode": "NO",
+                    "postnummer": "0151",
+                    "poststed": "OSLO",
+                    "adresse": [
+                        "Grev Wedels plass 9"
+                    ],
+                    "kommune": "OSLO",
+                    "kommunenummer": "0301"
+                }
             }"#.to_string()
         );
 
@@ -126,7 +137,18 @@ mod tests {
             "registeredInVatRegister": true,
             "bankruptcy": false,
             "underLiquidation": false,
-            "underForcedLiquidation": false
+            "underForcedLiquidation": false,
+            "businessAddress": {
+                "country": "Norge",
+                "countryCode": "NO",
+                "postalCode": "0151",
+                "city": "OSLO",
+                "street": [
+                    "Grev Wedels plass 9"
+                ],
+                "municipality": "OSLO",
+                "municipalityCode": "0301"
+            },
         }));
     }
 

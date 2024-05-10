@@ -12,7 +12,6 @@ lazy_static!(
     };
 );
 
-// Function to translate keys
 pub fn translate_keys(obj: &mut Value) {
     let translations = &*TRANSLATIONS;
 
@@ -21,7 +20,9 @@ pub fn translate_keys(obj: &mut Value) {
             let mut new_map = Map::new();
             for (key, value) in map.iter() {
                 let new_key = translations.get(key).unwrap_or(key).clone();
-                new_map.insert(new_key, value.clone());
+                let mut new_value = value.clone();
+                translate_keys(&mut new_value);
+                new_map.insert(new_key, new_value);
             }
             *map = new_map;
         }
