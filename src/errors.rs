@@ -23,6 +23,9 @@ pub enum VerificationError {
 
     #[error("Unexpected response: {0}")]
     UnexpectedResponse(String),
+
+    #[error("Unexpected status code: {0}")]
+    UnexpectedStatusCode(u16),
 }
 
 impl Debug for VerificationError {
