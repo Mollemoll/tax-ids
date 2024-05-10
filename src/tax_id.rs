@@ -7,6 +7,7 @@ use crate::gb_vat::GBVat;
 use crate::errors::{ValidationError, VerificationError};
 use crate::eu_vat;
 use crate::no_vat::NOVat;
+use crate::syntax::SYNTAX;
 use crate::verification::{Verification, Verifier};
 
 pub trait TaxIdType {
@@ -47,6 +48,19 @@ impl fmt::Debug for TaxId {
 }
 
 impl TaxId {
+    pub fn validate_syntax(value: &str) -> Result<(), ValidationError> {
+        let tax_country_code = &value[0..2];
+        SYNTAX.get(tax_country_code)
+            .ok_or(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
+            .and_then(|syntax| {
+                if syntax.is_match(value) {
+                    Ok(())
+                } else {
+                    Err(ValidationError::InvalidSyntax)
+                }
+            })
+    }
+
     pub fn new(value: &str) -> Result<TaxId, ValidationError> {
         let tax_country_code = &value[0..2];
         let local_value = &value[2..];
@@ -84,6 +98,42 @@ impl TaxId {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_validate_syntax() {
+        let valid_vat_numbers = vec![
+            "SE123456789101",
+            "EL123456789",
+            "GB591819014",
+            "XI591819014",
+            "CHE123456789",
+            "NO123456789MVA",
+        ];
+
+        for vat_number in valid_vat_numbers {
+            let valid_syntax = TaxId::validate_syntax(vat_number);
+            assert_eq!(
+                valid_syntax,
+                Ok(()),
+                "Expected {} to be valid",
+                vat_number
+            );
+        }
+    }
+
+    #[test]
+    fn test_validate_syntax_unknown_country() {
+        let tax_id = TaxId::new("XX123456789");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::UnknownCountryCode("XX".to_string()));
+    }
+
+    #[test]
+    fn test_validate_syntax_failed_validation() {
+        let tax_id = TaxId::new("SE12");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
+    }
 
     #[test]
     fn test_new_eu_vat() {
