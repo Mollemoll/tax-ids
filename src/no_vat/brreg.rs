@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT};
-use serde_json::json;
+use serde_json::{json, Value};
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
 use crate::no_vat::NOVat;
+use crate::no_vat::translator::translate_keys;
 
 // INFO(2024-05-08 mollemoll):
 // Data from Brønnøysund Register Centre
@@ -23,10 +24,10 @@ lazy_static! {
 
     pub static ref REQUIREMENTS_TO_BE_VALID : HashMap<&'static str, bool> = {
         let mut map = HashMap::new();
-        map.insert("registrertIMvaregisteret", true); // Registered for VAT
-        map.insert("konkurs", false); // In default?
-        map.insert("underAvvikling", false); // In liquidation?
-        map.insert("underTvangsavviklingEllerTvangsopplosning", false); // Forced liquidation?
+        map.insert("registeredInVatRegister", true); // Registered for VAT
+        map.insert("bankruptcy", false); // In default?
+        map.insert("underLiquidation", false);
+        map.insert("underForcedLiquidation", false); // Forced liquidation?
         map
     };
 }
@@ -77,8 +78,9 @@ impl Verifier for BRReg {
                 )
             ),
             200 | 500 => {
-                let v: serde_json::Value = serde_json::from_str(response.body())
+                let mut v: Value = serde_json::from_str(response.body())
                     .map_err(VerificationError::JSONParsingError)?;
+                translate_keys(&mut v);
                 let hash = v.as_object().unwrap();
 
                 if response.status() == 500 {
@@ -111,7 +113,18 @@ mod tests {
                 "registrertIMvaregisteret": true,
                 "konkurs": false,
                 "underAvvikling": false,
-                "underTvangsavviklingEllerTvangsopplosning": false
+                "underTvangsavviklingEllerTvangsopplosning": false,
+                "forretningsadresse": {
+                    "land": "Norge",
+                    "landkode": "NO",
+                    "postnummer": "0151",
+                    "poststed": "OSLO",
+                    "adresse": [
+                        "Grev Wedels plass 9"
+                    ],
+                    "kommune": "OSLO",
+                    "kommunenummer": "0301"
+                }
             }"#.to_string()
         );
 
@@ -119,12 +132,23 @@ mod tests {
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.data(), &json!({
-            "organisasjonsnummer": "123456789",
-            "navn": "Test Company AS",
-            "registrertIMvaregisteret": true,
-            "konkurs": false,
-            "underAvvikling": false,
-            "underTvangsavviklingEllerTvangsopplosning": false
+            "organizationNumber": "123456789",
+            "name": "Test Company AS",
+            "registeredInVatRegister": true,
+            "bankruptcy": false,
+            "underLiquidation": false,
+            "underForcedLiquidation": false,
+            "businessAddress": {
+                "country": "Norge",
+                "countryCode": "NO",
+                "postalCode": "0151",
+                "city": "OSLO",
+                "street": [
+                    "Grev Wedels plass 9"
+                ],
+                "municipality": "OSLO",
+                "municipalityCode": "0301"
+            },
         }));
     }
 
@@ -159,12 +183,12 @@ mod tests {
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
         assert_eq!(verification.data(), &json!({
-            "organisasjonsnummer": "123456789",
-            "navn": "Test Company AS",
-            "registrertIMvaregisteret": false,
-            "konkurs": false,
-            "underAvvikling": false,
-            "underTvangsavviklingEllerTvangsopplosning": false
+            "organizationNumber": "123456789",
+            "name": "Test Company AS",
+            "registeredInVatRegister": false,
+            "bankruptcy": false,
+            "underLiquidation": false,
+            "underForcedLiquidation": false
         }));
     }
 
