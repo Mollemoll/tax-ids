@@ -4,6 +4,7 @@ use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
 use crate::errors::{ValidationError, VerificationError};
 use crate::eu_vat;
+use crate::no_vat::NOVat;
 use crate::verification::{Verification, Verifier};
 
 pub trait TaxIdType {
@@ -39,6 +40,7 @@ impl TaxId {
         let id_type: Box<dyn TaxIdType> = match tax_country_code {
             "GB" => Box::new(GBVat),
             "CH" => Box::new(CHVat),
+            "NO" => Box::new(NOVat),
             _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EUVat),
             _ => return Err(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
         };
@@ -104,6 +106,15 @@ mod tests {
         assert_eq!(tax_id.country_code(), "GB");
         assert_eq!(tax_id.local_value(), "591819014");
         assert_eq!(tax_id.id_type().name(), "eu_vat");
+    }
+
+    #[test]
+    fn test_new_no_vat() {
+        let tax_id = TaxId::new("NO123456789MVA").unwrap();
+        assert_eq!(tax_id.value(), "NO123456789MVA");
+        assert_eq!(tax_id.country_code(), "NO");
+        assert_eq!(tax_id.local_value(), "123456789MVA");
+        assert_eq!(tax_id.id_type().name(), "no_vat");
     }
 
     #[test]
