@@ -1,15 +1,30 @@
+use std::collections::HashMap;
 use std::fmt;
+use regex::Regex;
 use crate::ch_vat::CHVat;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
 use crate::errors::{ValidationError, VerificationError};
 use crate::eu_vat;
 use crate::no_vat::NOVat;
+use crate::syntax::SYNTAX;
 use crate::verification::{Verification, Verifier};
 
 pub trait TaxIdType {
     fn name(&self) -> &'static str;
-    fn ensure_valid_syntax(&self, value: &str) -> bool;
+    fn syntax_map(&self) -> &HashMap<String, Regex>;
+    fn validate_syntax(&self, value: &str) -> Result<(), ValidationError> {
+        let tax_country_code = &value[0..2];
+        let pattern = self.syntax_map()
+            .get(tax_country_code)
+            .ok_or(ValidationError::UnknownCountryCode(tax_country_code.to_string()));
+
+        if pattern?.is_match(value) {
+            Ok(())
+        } else {
+            Err(ValidationError::InvalidSyntax)
+        }
+    }
     fn country_code_from(&self, tax_country_code: &str) -> String;
     fn verifier(&self) -> Box<dyn Verifier>;
     fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
@@ -33,6 +48,19 @@ impl fmt::Debug for TaxId {
 }
 
 impl TaxId {
+    pub fn validate_syntax(value: &str) -> Result<(), ValidationError> {
+        let tax_country_code = &value[0..2];
+        SYNTAX.get(tax_country_code)
+            .ok_or(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
+            .and_then(|syntax| {
+                if syntax.is_match(value) {
+                    Ok(())
+                } else {
+                    Err(ValidationError::InvalidSyntax)
+                }
+            })
+    }
+
     pub fn new(value: &str) -> Result<TaxId, ValidationError> {
         let tax_country_code = &value[0..2];
         let local_value = &value[2..];
@@ -45,16 +73,15 @@ impl TaxId {
             _ => return Err(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
         };
 
-        match id_type.ensure_valid_syntax(value) {
-            false => Err(ValidationError::InvalidSyntax),
-            true => Ok(TaxId {
-                country_code: id_type.country_code_from(tax_country_code),
-                value: value.to_string(),
-                tax_country_code: tax_country_code.to_string(),
-                local_value: local_value.to_string(),
-                id_type,
-            })
-        }
+        id_type.validate_syntax(value)?;
+
+        Ok(TaxId {
+            country_code: id_type.country_code_from(tax_country_code),
+            value: value.to_string(),
+            tax_country_code: tax_country_code.to_string(),
+            local_value: local_value.to_string(),
+            id_type,
+        })
     }
 
     pub fn verify(&self) -> Result<Verification, VerificationError> {
@@ -71,6 +98,42 @@ impl TaxId {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_validate_syntax() {
+        let valid_vat_numbers = vec![
+            "SE123456789101",
+            "EL123456789",
+            "GB591819014",
+            "XI591819014",
+            "CHE123456789",
+            "NO123456789MVA",
+        ];
+
+        for vat_number in valid_vat_numbers {
+            let valid_syntax = TaxId::validate_syntax(vat_number);
+            assert_eq!(
+                valid_syntax,
+                Ok(()),
+                "Expected {} to be valid",
+                vat_number
+            );
+        }
+    }
+
+    #[test]
+    fn test_validate_syntax_unknown_country() {
+        let tax_id = TaxId::new("XX123456789");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::UnknownCountryCode("XX".to_string()));
+    }
+
+    #[test]
+    fn test_validate_syntax_failed_validation() {
+        let tax_id = TaxId::new("SE12");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
+    }
 
     #[test]
     fn test_new_eu_vat() {

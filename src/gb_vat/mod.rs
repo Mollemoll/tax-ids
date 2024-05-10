@@ -1,8 +1,22 @@
 mod hmrc;
 
+use std::collections::HashMap;
+use lazy_static::lazy_static;
 use regex::Regex;
 use crate::tax_id::TaxIdType;
 use crate::verification::Verifier;
+
+lazy_static! {
+    pub static ref GB_VAT_PATTERN: HashMap<String, Regex> = {
+        let mut m = HashMap::new();
+        m.insert(
+            "GB".to_string(),
+            Regex::new(r"^GB([0-9]{9}|[0-9]{12}|(HA|GD)[0-9]{3})$").unwrap()
+        );
+        m
+    };
+
+}
 
 pub struct GBVat;
 
@@ -11,9 +25,8 @@ impl TaxIdType for GBVat {
         "gb_vat"
     }
 
-    fn ensure_valid_syntax(&self, value: &str) -> bool {
-        let regex = Regex::new(r"^GB([0-9]{9}|[0-9]{12}|(HA|GD)[0-9]{3})$").unwrap();
-        regex.is_match(value)
+    fn syntax_map(&self) -> &HashMap<String, Regex> {
+        &GB_VAT_PATTERN
     }
 
     fn country_code_from(&self, tax_country_code: &str) -> String {
@@ -28,7 +41,7 @@ impl TaxIdType for GBVat {
 #[cfg(test)]
 mod tests {
     use crate::gb_vat::GBVat;
-    use super::*;
+    use crate::tax_id::TaxIdType;
 
     #[test]
     fn test_gb_vat() {
@@ -46,24 +59,13 @@ mod tests {
             "SE123456789101"
         ];
 
-        for vat_number in valid_vat_numbers {
-            let valid_syntax = GBVat::ensure_valid_syntax(&GBVat, vat_number);
-            assert_eq!(
-                valid_syntax,
-                true,
-                "Expected valid VAT number, got invalid: {}",
-                vat_number
-            );
+        for valid in valid_vat_numbers {
+            assert!(GBVat::validate_syntax(&GBVat, valid).is_ok());
         }
 
-        for vat_number in invalid_vat_numbers {
-            let valid_syntax = GBVat::ensure_valid_syntax(&GBVat, vat_number);
-            assert_eq!(
-                valid_syntax,
-                false,
-                "Expected invalid VAT number, got valid: {}",
-                vat_number
-            );
+        for invalid in invalid_vat_numbers {
+            assert!(GBVat::validate_syntax(&GBVat, invalid).is_err());
         }
+
     }
 }
