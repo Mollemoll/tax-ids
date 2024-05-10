@@ -109,6 +109,15 @@ mod tests {
     }
 
     #[test]
+    fn test_new_ch_vat() {
+        let tax_id = TaxId::new("CHE123456789").unwrap();
+        assert_eq!(tax_id.value(), "CHE123456789");
+        assert_eq!(tax_id.country_code(), "CH");
+        assert_eq!(tax_id.local_value(), "E123456789");
+        assert_eq!(tax_id.id_type().name(), "ch_vat");
+    }
+
+    #[test]
     fn test_new_no_vat() {
         let tax_id = TaxId::new("NO123456789MVA").unwrap();
         assert_eq!(tax_id.value(), "NO123456789MVA");
