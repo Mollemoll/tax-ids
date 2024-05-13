@@ -15,9 +15,6 @@ pub enum VerificationError {
     #[error("HTTP client error: {0}")]
     HttpError(#[from] reqwest::Error),
 
-    #[error("XML parsing error: {0}")]
-    XmlParsingError(#[from] roxmltree::Error),
-
     #[error("JSON parsing error: {0}")]
     JSONParsingError(#[source] serde_json::Error),
 
@@ -26,6 +23,10 @@ pub enum VerificationError {
 
     #[error("Unexpected status code: {0}")]
     UnexpectedStatusCode(u16),
+
+    #[cfg(any(feature = "eu_vat", feature = "ch_vat"))]
+    #[error("XML parsing error: {0}")]
+    XmlParsingError(#[from] roxmltree::Error),
 }
 
 impl Debug for VerificationError {
