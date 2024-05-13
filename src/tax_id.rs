@@ -17,7 +17,7 @@ pub trait TaxIdType {
         let tax_country_code = &value[0..2];
         let pattern = self.syntax_map()
             .get(tax_country_code)
-            .ok_or(ValidationError::UnknownCountryCode(tax_country_code.to_string()));
+            .ok_or(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()));
 
         if pattern?.is_match(value) {
             Ok(())
@@ -51,7 +51,7 @@ impl TaxId {
     pub fn validate_syntax(value: &str) -> Result<(), ValidationError> {
         let tax_country_code = &value[0..2];
         SYNTAX.get(tax_country_code)
-            .ok_or(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
+            .ok_or(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()))
             .and_then(|syntax| {
                 if syntax.is_match(value) {
                     Ok(())
@@ -70,7 +70,7 @@ impl TaxId {
             "CH" => Box::new(CHVat),
             "NO" => Box::new(NOVat),
             _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EUVat),
-            _ => return Err(ValidationError::UnknownCountryCode(tax_country_code.to_string()))
+            _ => return Err(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()))
         };
 
         id_type.validate_syntax(value)?;
@@ -122,10 +122,10 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_syntax_unknown_country() {
+    fn test_validate_syntax_unsupported_country() {
         let tax_id = TaxId::new("XX123456789");
         assert!(tax_id.is_err());
-        assert_eq!(tax_id.unwrap_err(), ValidationError::UnknownCountryCode("XX".to_string()));
+        assert_eq!(tax_id.unwrap_err(), ValidationError::UnsupportedCountryCode("XX".to_string()));
     }
 
     #[test]
@@ -190,10 +190,10 @@ mod tests {
     }
 
     #[test]
-    fn test_new_unknown_country_code_err() {
+    fn test_new_unsupported_country_code_err() {
         let tax_id = TaxId::new("XX123456789");
         assert!(tax_id.is_err());
-        assert_eq!(tax_id.unwrap_err(), ValidationError::UnknownCountryCode("XX".to_string()));
+        assert_eq!(tax_id.unwrap_err(), ValidationError::UnsupportedCountryCode("XX".to_string()));
     }
 
     #[test]

@@ -4,7 +4,7 @@ use std::fmt::Debug;
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum ValidationError {
     #[error("Country code {0} is not supported")]
-    UnknownCountryCode(String),
+    UnsupportedCountryCode(String),
 
     #[error("Invalid syntax")]
     InvalidSyntax,
