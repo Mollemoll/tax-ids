@@ -7,9 +7,17 @@ edition = "2021"
 lazy_static = "1.4.0"
 regex = "1.10.4"
 reqwest = { version = "0.12.4", features = ["blocking"] }
-roxmltree = "0.19.0"
+roxmltree = {  version = "0.19.0", optional = true }
 chrono = "0.4.38"
 serde_json = "1.0.116"
 thiserror = "1.0.60"
-toml = "0.8.12"
+toml = { version = "0.8.12", optional = true }
+
+
+[features]
+default = ["eu_vat"]
+eu_vat = ["roxmltree"]
+gb_vat = []
+ch_vat = ["roxmltree"]
+no_vat = ["toml"]
 

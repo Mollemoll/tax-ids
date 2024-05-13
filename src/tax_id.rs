@@ -4,10 +4,16 @@ use regex::Regex;
 use crate::errors::{ValidationError, VerificationError};
 use crate::syntax::SYNTAX;
 use crate::verification::{Verification, Verifier};
+
+#[cfg(feature = "ch_vat")]
 use crate::ch_vat::CHVat;
+#[cfg(feature = "eu_vat")]
 use crate::eu_vat::EUVat;
+#[cfg(feature = "gb_vat")]
 use crate::gb_vat::GBVat;
+#[cfg(feature = "eu_vat")]
 use crate::eu_vat;
+#[cfg(feature = "no_vat")]
 use crate::no_vat::NOVat;
 
 pub trait TaxIdType {
@@ -66,9 +72,13 @@ impl TaxId {
         let local_value = &value[2..];
 
         let id_type: Box<dyn TaxIdType> = match tax_country_code {
+            #[cfg(feature = "gb_vat")]
             "GB" => Box::new(GBVat),
+            #[cfg(feature = "ch_vat")]
             "CH" => Box::new(CHVat),
+            #[cfg(feature = "no_vat")]
             "NO" => Box::new(NOVat),
+            #[cfg(feature = "eu_vat")]
             _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EUVat),
             _ => return Err(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()))
         };

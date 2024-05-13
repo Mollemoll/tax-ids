@@ -24,6 +24,7 @@ pub enum VerificationError {
     #[error("Unexpected status code: {0}")]
     UnexpectedStatusCode(u16),
 
+    #[cfg(any(feature = "eu_vat", feature = "ch_vat"))]
     #[error("XML parsing error: {0}")]
     XmlParsingError(#[from] roxmltree::Error),
 }
