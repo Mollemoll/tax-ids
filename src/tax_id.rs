@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 use std::fmt;
 use regex::Regex;
+use crate::errors::{ValidationError, VerificationError};
+use crate::syntax::SYNTAX;
+use crate::verification::{Verification, Verifier};
 use crate::ch_vat::CHVat;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
-use crate::errors::{ValidationError, VerificationError};
 use crate::eu_vat;
 use crate::no_vat::NOVat;
-use crate::syntax::SYNTAX;
-use crate::verification::{Verification, Verifier};
 
 pub trait TaxIdType {
     fn name(&self) -> &'static str;

@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
+use crate::tax_id::TaxIdType;
 use crate::ch_vat::CHVat;
 use crate::eu_vat::EUVat;
 use crate::gb_vat::GBVat;
 use crate::no_vat::NOVat;
-use crate::tax_id::TaxIdType;
 
 lazy_static! {
     pub static ref SYNTAX: HashMap<String, Regex> = {
