@@ -1,4 +1,4 @@
-mod tax_id;
+pub mod tax_id;
 mod errors;
 mod verification;
 mod syntax;
