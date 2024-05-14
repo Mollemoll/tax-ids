@@ -16,7 +16,7 @@ pub enum VerificationError {
     HttpError(#[from] reqwest::Error),
 
     #[error("JSON parsing error: {0}")]
-    JSONParsingError(#[source] serde_json::Error),
+    JsonParsingError(#[source] serde_json::Error),
 
     #[error("Unexpected response: {0}")]
     UnexpectedResponse(String),

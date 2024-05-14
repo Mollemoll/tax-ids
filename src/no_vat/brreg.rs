@@ -79,7 +79,7 @@ impl Verifier for BRReg {
             ),
             200 | 500 => {
                 let mut v: Value = serde_json::from_str(response.body())
-                    .map_err(VerificationError::JSONParsingError)?;
+                    .map_err(VerificationError::JsonParsingError)?;
                 translate_keys(&mut v);
                 let hash = v.as_object().unwrap();
 
