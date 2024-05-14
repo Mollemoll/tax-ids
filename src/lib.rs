@@ -22,9 +22,11 @@ use no_vat::NoVat;
 use std::collections::HashMap;
 use std::fmt;
 use regex::Regex;
-use crate::errors::{ValidationError, VerificationError};
-use crate::syntax::SYNTAX;
-use crate::verification::{Verification, Verifier};
+use syntax::SYNTAX;
+use verification::{Verifier};
+pub use verification::{Verification, VerificationStatus};
+pub use errors::{ValidationError, VerificationError};
+
 
 trait TaxIdType {
     fn name(&self) -> &'static str;
