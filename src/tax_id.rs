@@ -31,7 +31,7 @@ pub trait TaxIdType {
             Err(ValidationError::InvalidSyntax)
         }
     }
-    fn country_code_from(&self, tax_country_code: &str) -> String;
+    fn country_code_from_tax_country(&self, tax_country_code: &str) -> String;
     fn verifier(&self) -> Box<dyn Verifier>;
     fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
         self.verifier().verify(tax_id)
@@ -86,7 +86,7 @@ impl TaxId {
         id_type.validate_syntax(value)?;
 
         Ok(TaxId {
-            country_code: id_type.country_code_from(tax_country_code),
+            country_code: id_type.country_code_from_tax_country(tax_country_code),
             value: value.to_string(),
             tax_country_code: tax_country_code.to_string(),
             local_value: local_value.to_string(),

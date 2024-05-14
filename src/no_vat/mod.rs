@@ -31,7 +31,7 @@ impl TaxIdType for NoVat {
         &NO_VAT_PATTERN
     }
 
-    fn country_code_from(&self, tax_country_code: &str) -> String {
+    fn country_code_from_tax_country(&self, tax_country_code: &str) -> String {
         tax_country_code.to_string()
     }
 

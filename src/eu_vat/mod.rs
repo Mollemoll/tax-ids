@@ -27,7 +27,7 @@ impl TaxIdType for EuVat {
         &EU_VAT_PATTERNS
     }
 
-    fn country_code_from(&self, tax_country_code: &str) -> String {
+    fn country_code_from_tax_country(&self, tax_country_code: &str) -> String {
         let country_code = match tax_country_code {
             "XI" => "GB",
             "EL" => "GR",
