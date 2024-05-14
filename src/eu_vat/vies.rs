@@ -22,6 +22,7 @@ static ENVELOPE: &'static str = "
 </soapenv:Envelope>
 ";
 
+#[derive(Debug)]
 pub struct VIES;
 
 impl VIES {

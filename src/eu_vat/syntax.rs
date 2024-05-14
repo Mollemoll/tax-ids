@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use regex::Regex;
 
 lazy_static! {
+    #[derive(Debug)]
     pub static ref EU_VAT_PATTERNS: HashMap<String, Regex> = {
         let mut m = HashMap::new();
         m.insert("AT".to_string(), Regex::new(r"^ATU[0-9]{8}$").unwrap());

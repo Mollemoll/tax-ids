@@ -16,12 +16,14 @@ use crate::no_vat::translator::translate_keys;
 static BASE_URI: &'static str = "https://data.brreg.no/enhetsregisteret/api/enheter";
 
 lazy_static! {
+    #[derive(Debug)]
     pub static ref HEADERS: HeaderMap = {
         let mut headers = HeaderMap::new();
         headers.insert(ACCEPT, HeaderValue::from_static("application/vnd.brreg.enhetsregisteret.enhet.v2+json"));
         headers
     };
 
+    #[derive(Debug)]
     pub static ref REQUIREMENTS_TO_BE_VALID : HashMap<&'static str, bool> = {
         let mut map = HashMap::new();
         map.insert("registeredInVatRegister", true); // Registered for VAT
@@ -32,6 +34,7 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
 pub struct BRReg;
 
 impl BRReg {

@@ -7,6 +7,7 @@ use crate::tax_id::TaxIdType;
 use crate::verification::Verifier;
 
 lazy_static! {
+    #[derive(Debug)]
     pub static ref GB_VAT_PATTERN: HashMap<String, Regex> = {
         let mut m = HashMap::new();
         m.insert(
@@ -18,6 +19,7 @@ lazy_static! {
 
 }
 
+#[derive(Debug)]
 pub struct GbVat;
 
 impl TaxIdType for GbVat {

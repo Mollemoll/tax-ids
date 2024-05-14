@@ -8,6 +8,7 @@ use crate::tax_id::{TaxId, TaxIdType};
 use crate::verification::Verifier;
 
 lazy_static! {
+    #[derive(Debug)]
     pub static ref NO_VAT_PATTERN: HashMap<String, Regex> = {
         let mut m = HashMap::new();
         m.insert("NO".to_string(), Regex::new(r"^NO[0-9]{9}(MVA)?$").unwrap());
@@ -15,6 +16,7 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
 pub struct NoVat;
 
 impl NoVat {

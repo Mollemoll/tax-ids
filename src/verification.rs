@@ -2,6 +2,7 @@ use chrono::prelude::*;
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
 
+#[derive(Debug, PartialEq)]
 pub struct VerificationResponse {
     status: u16,
     body: String,
@@ -26,7 +27,7 @@ pub enum VerificationStatus {
     Unavailable,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Verification {
     performed_at: DateTime<Local>,
     status: VerificationStatus,
