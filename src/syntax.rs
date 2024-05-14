@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::tax_id::TaxIdType;
 
 #[cfg(feature = "ch_vat")]
 use crate::ch_vat::ChVat;
@@ -11,6 +10,7 @@ use crate::eu_vat::EuVat;
 use crate::gb_vat::GbVat;
 #[cfg(feature = "no_vat")]
 use crate::no_vat::NoVat;
+use crate::TaxIdType;
 
 lazy_static! {
     #[derive(Debug)]

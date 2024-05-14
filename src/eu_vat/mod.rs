@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
 use syntax::EU_VAT_PATTERNS;
-use crate::tax_id::TaxIdType;
+use crate::TaxIdType;
 use crate::verification::{Verifier};
 
 #[derive(Debug)]
