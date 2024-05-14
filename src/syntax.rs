@@ -4,13 +4,13 @@ use regex::Regex;
 use crate::tax_id::TaxIdType;
 
 #[cfg(feature = "ch_vat")]
-use crate::ch_vat::CHVat;
+use crate::ch_vat::ChVat;
 #[cfg(feature = "eu_vat")]
-use crate::eu_vat::EUVat;
+use crate::eu_vat::EuVat;
 #[cfg(feature = "gb_vat")]
-use crate::gb_vat::GBVat;
+use crate::gb_vat::GbVat;
 #[cfg(feature = "no_vat")]
-use crate::no_vat::NOVat;
+use crate::no_vat::NoVat;
 
 lazy_static! {
     pub static ref SYNTAX: HashMap<String, Regex> = {
@@ -18,13 +18,13 @@ lazy_static! {
 
         let types: Vec<Box<dyn TaxIdType>> = vec![
             #[cfg(feature = "gb_vat")]
-            Box::new(GBVat),
+            Box::new(GbVat),
             #[cfg(feature = "ch_vat")]
-            Box::new(CHVat),
+            Box::new(ChVat),
             #[cfg(feature = "no_vat")]
-            Box::new(NOVat),
+            Box::new(NoVat),
             #[cfg(feature = "eu_vat")]
-            Box::new(EUVat),
+            Box::new(EuVat),
         ];
 
         for t in types {

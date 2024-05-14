@@ -31,7 +31,7 @@ impl Verifier for HMRC {
 
     fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
         let v: serde_json::Value = serde_json::from_str(response.body())
-            .map_err(VerificationError::JSONParsingError)?;
+            .map_err(VerificationError::JsonParsingError)?;
         let hash = v.as_object().unwrap();
         let fault = hash.get("code").and_then(|v| v.as_str());
 

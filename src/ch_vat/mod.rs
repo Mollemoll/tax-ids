@@ -17,9 +17,9 @@ lazy_static! {
     };
 }
 
-pub struct CHVat;
+pub struct ChVat;
 
-impl TaxIdType for CHVat {
+impl TaxIdType for ChVat {
     fn name(&self) -> &'static str {
         "ch_vat"
     }
@@ -28,7 +28,7 @@ impl TaxIdType for CHVat {
         &CH_VAT_PATTERN
     }
 
-    fn country_code_from(&self, tax_country_code: &str) -> String {
+    fn country_code_from_tax_country(&self, tax_country_code: &str) -> String {
         tax_country_code.to_string()
     }
 
@@ -85,11 +85,11 @@ mod tests {
         ];
 
         for valid in valid_vat_numbers {
-            assert!(CHVat::validate_syntax(&CHVat, valid).is_ok());
+            assert!(ChVat::validate_syntax(&ChVat, valid).is_ok());
         }
 
         for invalid in invalid_vat_numbers {
-            assert!(CHVat::validate_syntax(&CHVat, invalid).is_err());
+            assert!(ChVat::validate_syntax(&ChVat, invalid).is_err());
         }
     }
 }
