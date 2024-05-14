@@ -13,6 +13,7 @@ use crate::gb_vat::GbVat;
 use crate::no_vat::NoVat;
 
 lazy_static! {
+    #[derive(Debug)]
     pub static ref SYNTAX: HashMap<String, Regex> = {
         let mut m = HashMap::new();
 

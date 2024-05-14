@@ -8,6 +8,7 @@ use syntax::EU_VAT_PATTERNS;
 use crate::tax_id::TaxIdType;
 use crate::verification::{Verifier};
 
+#[derive(Debug)]
 pub struct EuVat;
 
 lazy_static! {

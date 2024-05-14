@@ -10,6 +10,7 @@ use crate::verification::{Verification, VerificationResponse, VerificationStatus
 
 static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 
+#[derive(Debug)]
 pub struct HMRC;
 
 impl Verifier for HMRC {

@@ -27,6 +27,7 @@ static ENVELOPE: &'static str = "
 ";
 
 lazy_static! {
+    #[derive(Debug)]
     pub static ref HEADERS: HeaderMap = {
         let mut headers = HeaderMap::new();
         headers.insert(ACCEPT, HeaderValue::from_static("text/xml;charset=UTF-8"));
@@ -39,6 +40,7 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
 pub struct BFS;
 
 impl BFS {
