@@ -26,7 +26,7 @@ use crate::errors::{ValidationError, VerificationError};
 use crate::syntax::SYNTAX;
 use crate::verification::{Verification, Verifier};
 
-pub trait TaxIdType {
+trait TaxIdType {
     fn name(&self) -> &'static str;
     fn syntax_map(&self) -> &HashMap<String, Regex>;
     fn validate_syntax(&self, value: &str) -> Result<(), ValidationError> {
@@ -112,7 +112,9 @@ impl TaxId {
     pub fn country_code(&self) -> &str { &self.country_code }
     pub fn tax_country_code(&self) -> &str { &self.tax_country_code }
     pub fn local_value(&self) -> &str { &self.local_value }
-    pub fn id_type(&self) -> &Box<dyn TaxIdType> { &self.id_type }
+
+    pub fn tax_id_type(&self) -> &str { self.id_type.name() }
+    fn id_type(&self) -> &Box<dyn TaxIdType> { &self.id_type }
 }
 
 #[cfg(test)]
