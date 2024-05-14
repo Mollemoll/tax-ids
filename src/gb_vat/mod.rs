@@ -18,9 +18,9 @@ lazy_static! {
 
 }
 
-pub struct GBVat;
+pub struct GbVat;
 
-impl TaxIdType for GBVat {
+impl TaxIdType for GbVat {
     fn name(&self) -> &'static str {
         "gb_vat"
     }
@@ -40,7 +40,7 @@ impl TaxIdType for GBVat {
 
 #[cfg(test)]
 mod tests {
-    use crate::gb_vat::GBVat;
+    use crate::gb_vat::GbVat;
     use crate::tax_id::TaxIdType;
 
     #[test]
@@ -60,11 +60,11 @@ mod tests {
         ];
 
         for valid in valid_vat_numbers {
-            assert!(GBVat::validate_syntax(&GBVat, valid).is_ok());
+            assert!(GbVat::validate_syntax(&GBVat, valid).is_ok());
         }
 
         for invalid in invalid_vat_numbers {
-            assert!(GBVat::validate_syntax(&GBVat, invalid).is_err());
+            assert!(GbVat::validate_syntax(&GBVat, invalid).is_err());
         }
 
     }

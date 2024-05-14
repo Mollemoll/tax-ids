@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
 use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
-use crate::no_vat::NOVat;
+use crate::no_vat::NoVat;
 use crate::no_vat::translator::translate_keys;
 
 // INFO(2024-05-08 mollemoll):
@@ -57,7 +57,7 @@ impl Verifier for BRReg {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let res = client
-            .get(format!("{}/{}", BASE_URI, NOVat::extract_org_number(&NOVat, tax_id)))
+            .get(format!("{}/{}", BASE_URI, NoVat::extract_org_number(&NOVat, tax_id)))
             .headers(HEADERS.clone())
             .send()
             .map_err(VerificationError::HttpError)?;

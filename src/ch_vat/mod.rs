@@ -17,9 +17,9 @@ lazy_static! {
     };
 }
 
-pub struct CHVat;
+pub struct ChVat;
 
-impl TaxIdType for CHVat {
+impl TaxIdType for ChVat {
     fn name(&self) -> &'static str {
         "ch_vat"
     }
@@ -85,11 +85,11 @@ mod tests {
         ];
 
         for valid in valid_vat_numbers {
-            assert!(CHVat::validate_syntax(&CHVat, valid).is_ok());
+            assert!(ChVat::validate_syntax(&ChVat, valid).is_ok());
         }
 
         for invalid in invalid_vat_numbers {
-            assert!(CHVat::validate_syntax(&CHVat, invalid).is_err());
+            assert!(ChVat::validate_syntax(&ChVat, invalid).is_err());
         }
     }
 }

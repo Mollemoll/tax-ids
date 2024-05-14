@@ -6,15 +6,15 @@ use crate::syntax::SYNTAX;
 use crate::verification::{Verification, Verifier};
 
 #[cfg(feature = "ch_vat")]
-use crate::ch_vat::CHVat;
+use crate::ch_vat::ChVat;
 #[cfg(feature = "eu_vat")]
-use crate::eu_vat::EUVat;
+use crate::eu_vat::EuVat;
 #[cfg(feature = "gb_vat")]
-use crate::gb_vat::GBVat;
+use crate::gb_vat::GbVat;
 #[cfg(feature = "eu_vat")]
 use crate::eu_vat;
 #[cfg(feature = "no_vat")]
-use crate::no_vat::NOVat;
+use crate::no_vat::NoVat;
 
 pub trait TaxIdType {
     fn name(&self) -> &'static str;
@@ -73,13 +73,13 @@ impl TaxId {
 
         let id_type: Box<dyn TaxIdType> = match tax_country_code {
             #[cfg(feature = "gb_vat")]
-            "GB" => Box::new(GBVat),
+            "GB" => Box::new(GbVat),
             #[cfg(feature = "ch_vat")]
-            "CH" => Box::new(CHVat),
+            "CH" => Box::new(ChVat),
             #[cfg(feature = "no_vat")]
-            "NO" => Box::new(NOVat),
+            "NO" => Box::new(NoVat),
             #[cfg(feature = "eu_vat")]
-            _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EUVat),
+            _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EuVat),
             _ => return Err(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()))
         };
 

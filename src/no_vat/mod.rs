@@ -15,15 +15,15 @@ lazy_static! {
     };
 }
 
-pub struct NOVat;
+pub struct NoVat;
 
-impl NOVat {
+impl NoVat {
     pub fn extract_org_number(&self, tax_id: &TaxId) -> String {
         tax_id.local_value().replace("MVA", "")
     }
 }
 
-impl TaxIdType for NOVat {
+impl TaxIdType for NoVat {
     fn name(&self) -> &'static str {
         "no_vat"
     }
@@ -48,7 +48,7 @@ mod tests {
     fn test_extract_org_number() {
         let tax_id = TaxId::new("NO123456789MVA").unwrap();
 
-        assert_eq!(NOVat::extract_org_number(&NOVat, &tax_id), "123456789");
+        assert_eq!(NoVat::extract_org_number(&NoVat, &tax_id), "123456789");
     }
 
     #[test]
@@ -68,11 +68,11 @@ mod tests {
         ];
 
         for valid in valid_vat_numbers {
-            assert!(NOVat::validate_syntax(&NOVat, valid).is_ok());
+            assert!(NoVat::validate_syntax(&NoVat, valid).is_ok());
         }
 
         for invalid in invalid_vat_numbers {
-            assert!(NOVat::validate_syntax(&NOVat, invalid).is_err());
+            assert!(NoVat::validate_syntax(&NoVat, invalid).is_err());
         }
     }
 }

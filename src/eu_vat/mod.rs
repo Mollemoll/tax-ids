@@ -8,7 +8,7 @@ use syntax::EU_VAT_PATTERNS;
 use crate::tax_id::TaxIdType;
 use crate::verification::{Verifier};
 
-pub struct EUVat;
+pub struct EuVat;
 
 lazy_static! {
     #[derive(Debug)]
@@ -18,7 +18,7 @@ lazy_static! {
     ];
 }
 
-impl TaxIdType for EUVat {
+impl TaxIdType for EuVat {
     fn name(&self) -> &'static str {
         "eu_vat"
     }
@@ -49,7 +49,7 @@ mod tests {
 
     fn assert_validations(valid_vat_numbers: Vec<&str>, invalid_vat_numbers: Vec<&str>) {
         for vat_number in valid_vat_numbers {
-            let valid_syntax = EUVat::validate_syntax(&EUVat, vat_number);
+            let valid_syntax = EuVat::validate_syntax(&EuVat, vat_number);
             assert_eq!(
                 valid_syntax,
                 Ok(()),
@@ -59,7 +59,7 @@ mod tests {
         }
 
         for vat_number in invalid_vat_numbers {
-            let valid_syntax = EUVat::validate_syntax(&EUVat, vat_number);
+            let valid_syntax = EuVat::validate_syntax(&EuVat, vat_number);
             assert_eq!(valid_syntax, Err(ValidationError::InvalidSyntax));
         }
     }
