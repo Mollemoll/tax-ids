@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use roxmltree;
 use serde_json::json;
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
-use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
+use crate::TaxId;
 
 // INFO(2024-05-08 mollemoll):
 // Data from VIES

@@ -1,6 +1,6 @@
 use chrono::prelude::*;
-use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
+use crate::TaxId;
 
 #[derive(Debug, PartialEq)]
 pub struct VerificationResponse {
