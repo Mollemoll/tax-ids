@@ -36,7 +36,7 @@ impl TaxIdType for GbVat {
     }
 
     fn verifier(&self) -> Box<dyn Verifier> {
-        Box::new(hmrc::HMRC)
+        Box::new(hmrc::Hmrc)
     }
 }
 
