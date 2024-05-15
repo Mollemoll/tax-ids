@@ -39,7 +39,7 @@ impl TaxIdType for EuVat {
     }
 
     fn verifier(&self) -> Box<dyn Verifier> {
-        Box::new(vies::VIES)
+        Box::new(vies::Vies)
     }
 }
 
