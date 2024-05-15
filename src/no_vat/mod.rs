@@ -4,7 +4,7 @@ mod translator;
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::tax_id::{TaxId, TaxIdType};
+use crate::{TaxId, TaxIdType};
 use crate::verification::Verifier;
 
 lazy_static! {

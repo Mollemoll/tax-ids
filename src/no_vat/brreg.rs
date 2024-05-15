@@ -3,10 +3,10 @@ use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT};
 use serde_json::{json, Value};
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
-use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
 use crate::no_vat::NoVat;
 use crate::no_vat::translator::translate_keys;
+use crate::TaxId;
 
 // INFO(2024-05-08 mollemoll):
 // Data from Brønnøysund Register Centre
@@ -60,7 +60,7 @@ impl Verifier for BRReg {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let res = client
-            .get(format!("{}/{}", BASE_URI, NoVat::extract_org_number(&NOVat, tax_id)))
+            .get(format!("{}/{}", BASE_URI, NoVat::extract_org_number(&NoVat, tax_id)))
             .headers(HEADERS.clone())
             .send()
             .map_err(VerificationError::HttpError)?;
