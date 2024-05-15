@@ -125,14 +125,12 @@ mod tests {
 
     #[test]
     fn test_validate_syntax() {
-        let mut valid_vat_numbers: Vec<&str>;
+        let mut valid_vat_numbers: Vec<&str> = Vec::new();
         #[cfg(feature = "eu_vat")]
         {
-            valid_vat_numbers = vec![
-                "SE123456789101",
-                "EL123456789",
-                "XI591819014",
-            ];
+            valid_vat_numbers.push("SE123456789101");
+            valid_vat_numbers.push("EL123456789");
+            valid_vat_numbers.push("XI591819014");
         }
         #[cfg(feature = "gb_vat")]
         valid_vat_numbers.push("GB591819014");
