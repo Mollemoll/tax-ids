@@ -187,7 +187,7 @@ mod tests {
         assert_eq!(tax_id.value(), "SE123456789101");
         assert_eq!(tax_id.country_code(), "SE");
         assert_eq!(tax_id.local_value(), "123456789101");
-        assert_eq!(tax_id.id_type().name(), "eu_vat");
+        assert_eq!(tax_id.tax_id_type(), "eu_vat");
     }
 
     #[cfg(feature = "eu_vat")]
@@ -197,7 +197,7 @@ mod tests {
         assert_eq!(tax_id.value(), "EL123456789");
         assert_eq!(tax_id.country_code(), "GR");
         assert_eq!(tax_id.local_value(), "123456789");
-        assert_eq!(tax_id.id_type().name(), "eu_vat");
+        assert_eq!(tax_id.tax_id_type(), "eu_vat");
     }
 
     #[cfg(feature = "eu_vat")]
@@ -207,7 +207,7 @@ mod tests {
         assert_eq!(tax_id.value(), "XI591819014");
         assert_eq!(tax_id.country_code(), "GB");
         assert_eq!(tax_id.local_value(), "591819014");
-        assert_eq!(tax_id.id_type().name(), "eu_vat");
+        assert_eq!(tax_id.tax_id_type(), "eu_vat");
     }
 
     #[cfg(feature = "gb_vat")]
@@ -217,7 +217,7 @@ mod tests {
         assert_eq!(tax_id.value(), "GB591819014");
         assert_eq!(tax_id.country_code(), "GB");
         assert_eq!(tax_id.local_value(), "591819014");
-        assert_eq!(tax_id.id_type().name(), "gb_vat");
+        assert_eq!(tax_id.tax_id_type(), "gb_vat");
     }
 
     #[cfg(feature = "ch_vat")]
@@ -227,7 +227,7 @@ mod tests {
         assert_eq!(tax_id.value(), "CHE123456789");
         assert_eq!(tax_id.country_code(), "CH");
         assert_eq!(tax_id.local_value(), "E123456789");
-        assert_eq!(tax_id.id_type().name(), "ch_vat");
+        assert_eq!(tax_id.tax_id_type(), "ch_vat");
     }
 
     #[cfg(feature = "no_vat")]
@@ -237,7 +237,7 @@ mod tests {
         assert_eq!(tax_id.value(), "NO123456789MVA");
         assert_eq!(tax_id.country_code(), "NO");
         assert_eq!(tax_id.local_value(), "123456789MVA");
-        assert_eq!(tax_id.id_type().name(), "no_vat");
+        assert_eq!(tax_id.tax_id_type(), "no_vat");
     }
 }
 
