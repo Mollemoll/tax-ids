@@ -35,9 +35,9 @@ lazy_static! {
 }
 
 #[derive(Debug)]
-pub struct BRReg;
+pub struct BrReg;
 
-impl BRReg {
+impl BrReg {
     fn qualify(&self, hash: &serde_json::Map<String, serde_json::Value>) -> VerificationStatus {
         let mut valid = true;
         for (key, value) in REQUIREMENTS_TO_BE_VALID.iter() {
@@ -56,7 +56,7 @@ impl BRReg {
     }
 }
 
-impl Verifier for BRReg {
+impl Verifier for BrReg {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let res = client
@@ -131,7 +131,7 @@ mod tests {
             }"#.to_string()
         );
 
-        let verifier = BRReg;
+        let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.data(), &json!({
@@ -162,7 +162,7 @@ mod tests {
             r#"{}"#.to_string()
         );
 
-        let verifier = BRReg;
+        let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
         assert_eq!(verification.data(), &json!({}));
@@ -182,7 +182,7 @@ mod tests {
             }"#.to_string()
         );
 
-        let verifier = BRReg;
+        let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
         assert_eq!(verification.data(), &json!({
@@ -210,7 +210,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BRReg;
+        let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
         assert_eq!(verification.data(), &json!({}));
@@ -232,7 +232,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BRReg;
+        let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Unavailable);
         assert_eq!(verification.data(), &json!({
@@ -252,7 +252,7 @@ mod tests {
             "".to_string()
         );
 
-        let verifier = BRReg;
+        let verifier = BrReg;
         let verification = verifier.parse_response(response);
         assert_eq!(verification.is_err(), true);
         match verification {
