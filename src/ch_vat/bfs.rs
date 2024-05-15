@@ -10,7 +10,7 @@ use crate::TaxId;
 // INFO(2024-05-07 mollemoll):
 // https://www.bfs.admin.ch/bfs/en/home/registers/enterprise-register/enterprise-identification/uid-register/uid-interfaces.html#-125185306
 // https://www.bfs.admin.ch/bfs/fr/home/registres/registre-entreprises/numero-identification-entreprises/registre-ide/interfaces-ide.assetdetail.11007266.html
-// BFS Accepted format: 'CHE123456789' or 'CHE-123.456.789' with optional space and
+// Bfs Accepted format: 'CHE123456789' or 'CHE-123.456.789' with optional space and
 // MWST/TVA/IVA extension: 'CHE123456789 MWST' or 'CHE-123.456.789 MWST'
 
 static URI: &'static str = "https://www.uid-wse-a.admin.ch/V5.0/PublicServices.svc";
@@ -41,9 +41,9 @@ lazy_static! {
 }
 
 #[derive(Debug)]
-pub struct BFS;
+pub struct Bfs;
 
-impl BFS {
+impl Bfs {
     fn xml_to_hash(xml: &roxmltree::Document) -> HashMap<String, Option<String>> {
         let mut hash = HashMap::new();
         let tags_to_exclude = [
@@ -70,7 +70,7 @@ impl BFS {
     }
 }
 
-impl Verifier for BFS {
+impl Verifier for Bfs {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
@@ -92,7 +92,7 @@ impl Verifier for BFS {
 
     fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
         let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
-        let hash = BFS::xml_to_hash(&doc);
+        let hash = Bfs::xml_to_hash(&doc);
         let fault_string = hash.get("faultstring")
             .and_then(|x| x.as_deref());
 
@@ -134,7 +134,7 @@ mod tests {
             </s:Envelope>
         "#;
         let doc = roxmltree::Document::parse(xml).unwrap();
-        let hash = BFS::xml_to_hash(&doc);
+        let hash = Bfs::xml_to_hash(&doc);
 
         assert_eq!(hash.get("ValidateVatNumberResult"), Some(&Some("true".to_string())));
     }
@@ -154,7 +154,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BFS;
+        let verifier = Bfs;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Verified);
@@ -178,7 +178,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BFS;
+        let verifier = Bfs;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
@@ -210,7 +210,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BFS;
+        let verifier = Bfs;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unavailable);
@@ -239,7 +239,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BFS;
+        let verifier = Bfs;
         let verification = verifier.parse_response(response);
 
         match verification {
@@ -265,7 +265,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BFS;
+        let verifier = Bfs;
         let verification = verifier.parse_response(response);
 
         match verification {
@@ -291,7 +291,7 @@ mod tests {
             "#.to_string()
         );
 
-        let verifier = BFS;
+        let verifier = Bfs;
         let verification = verifier.parse_response(response);
 
         match verification {

@@ -11,9 +11,9 @@ use crate::verification::{Verification, VerificationResponse, VerificationStatus
 static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 
 #[derive(Debug)]
-pub struct HMRC;
+pub struct Hmrc;
 
-impl Verifier for HMRC {
+impl Verifier for Hmrc {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let res = client
@@ -86,7 +86,7 @@ mod tests {
             }"#.to_string()
         );
 
-        let verifier = HMRC;
+        let verifier = Hmrc;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Verified);
@@ -114,7 +114,7 @@ mod tests {
             }"#.to_string()
         );
 
-        let verifier = HMRC;
+        let verifier = Hmrc;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
@@ -133,7 +133,7 @@ mod tests {
             }"#.to_string()
         );
 
-        let verifier = HMRC;
+        let verifier = Hmrc;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unavailable);

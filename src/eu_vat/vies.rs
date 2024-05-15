@@ -6,7 +6,7 @@ use crate::errors::VerificationError;
 use crate::TaxId;
 
 // INFO(2024-05-08 mollemoll):
-// Data from VIES
+// Data from Vies
 // https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 
 static URI: &'static str = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
@@ -23,9 +23,9 @@ static ENVELOPE: &'static str = "
 ";
 
 #[derive(Debug)]
-pub struct VIES;
+pub struct Vies;
 
-impl VIES {
+impl Vies {
     fn xml_to_hash(xml: &roxmltree::Document) -> HashMap<String, Option<String>> {
         let mut hash = HashMap::new();
         let tags_to_exclude = ["Body", "Envelope", "Fault"];
@@ -50,7 +50,7 @@ impl VIES {
     }
 }
 
-impl Verifier for VIES {
+impl Verifier for Vies {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let body = ENVELOPE
@@ -73,7 +73,7 @@ impl Verifier for VIES {
 
     fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
         let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
-        let hash = VIES::xml_to_hash(&doc);
+        let hash = Vies::xml_to_hash(&doc);
         let fault_string = hash.get("faultstring")
             .and_then(|x| x.as_deref());
 
@@ -131,7 +131,7 @@ mod tests {
             </soapenv:Envelope>
         "#;
         let doc = roxmltree::Document::parse(xml).unwrap();
-        let hash = VIES::xml_to_hash(&doc);
+        let hash = Vies::xml_to_hash(&doc);
 
         assert_eq!(hash.get("countryCode"), Some(&Some("SE".to_string())));
         assert_eq!(hash.get("vatNumber"), Some(&Some("123456789101".to_string())));
@@ -161,7 +161,7 @@ mod tests {
                     </soapenv:Envelope>
                 "#.to_string()
         );
-        let verifier = VIES;
+        let verifier = Vies;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Verified);
@@ -187,7 +187,7 @@ mod tests {
                 </soapenv:Envelope>
             "#.to_string()
         );
-        let verifier = VIES;
+        let verifier = Vies;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
@@ -209,7 +209,7 @@ mod tests {
                 </env:Envelope>
             "#.to_string()
         );
-        let verifier = VIES;
+        let verifier = Vies;
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &VerificationStatus::Unavailable);
@@ -234,7 +234,7 @@ mod tests {
                 </soapenv:Envelope>
             "#.to_string()
         );
-        let verifier = VIES;
+        let verifier = Vies;
         let verification = verifier.parse_response(response);
 
         match verification {
@@ -260,7 +260,7 @@ mod tests {
                 </soapenv:Envelope>
             "#.to_string()
         );
-        let verifier = VIES;
+        let verifier = Vies;
         let verification = verifier.parse_response(response);
 
         match verification {

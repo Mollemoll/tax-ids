@@ -38,7 +38,7 @@ impl TaxIdType for NoVat {
     }
 
     fn verifier(&self) -> Box<dyn Verifier> {
-        Box::new(brreg::BRReg)
+        Box::new(brreg::BrReg)
     }
 }
 

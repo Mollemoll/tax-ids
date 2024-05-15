@@ -35,7 +35,7 @@ impl TaxIdType for ChVat {
     }
 
     fn verifier(&self) -> Box<dyn Verifier> {
-        Box::new(bfs::BFS)
+        Box::new(bfs::Bfs)
     }
 }
 
