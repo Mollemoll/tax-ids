@@ -1,18 +1,4 @@
-//! This Rust crate provides a solution for verifying tax ids (VAT/GST) for businesses operating
-//! within the European Union, the United Kingdom, Switzerland, and Norway.
-//!
-//! ### Features
-//!
-//! - **Country-Specific Syntax Validation**: The library includes functionality to validate the syntax
-//!   of tax ids based on the specific rules and formats of each supported country.
-//!
-//! - **Verification Requests**: Beyond simple syntax validation, this library can perform actual
-//!   verification requests against the appropriate government databases. This allows for real-time
-//!   confirmation or denial of the legitimacy of a given tax id.
-//!
-//! The library has been inspired by the [valvat] library for Ruby.
-//!
-//! [valvat]: https://github.com/yolk/valvat
+#![doc = include_str!("../README.md")]
 
 mod errors;
 mod verification;
