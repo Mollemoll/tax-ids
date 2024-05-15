@@ -3,7 +3,7 @@ mod bfs;
 use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::tax_id::TaxIdType;
+use crate::TaxIdType;
 use crate::verification::Verifier;
 
 lazy_static! {

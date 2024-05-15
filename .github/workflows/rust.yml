@@ -14,9 +14,13 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        feature: [eu_vat, gb_vat, ch_vat, no_vat]
+
     steps:
-    - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
+      - uses: actions/checkout@v4
+      - name: Build
+        run: cargo build --verbose --no-default-features --features ${{ matrix.feature }}
+      - name: Run tests
+        run: cargo test --verbose --no-default-features --features ${{ matrix.feature }}

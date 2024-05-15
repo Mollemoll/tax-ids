@@ -1,6 +1,6 @@
 use serde_json::json;
 use crate::errors::VerificationError;
-use crate::tax_id::TaxId;
+use crate::TaxId;
 use crate::verification::{Verification, VerificationResponse, VerificationStatus, Verifier};
 
 // INFO(2024-05-08 mollemoll):

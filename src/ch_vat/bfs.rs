@@ -4,8 +4,8 @@ use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
 use roxmltree;
 use serde_json::json;
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
-use crate::tax_id::TaxId;
 use crate::errors::VerificationError;
+use crate::TaxId;
 
 // INFO(2024-05-07 mollemoll):
 // https://www.bfs.admin.ch/bfs/en/home/registers/enterprise-register/enterprise-identification/uid-register/uid-interfaces.html#-125185306

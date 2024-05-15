@@ -99,7 +99,16 @@ mod tests {
 
     #[test]
     fn test_verify() {
-        let tax_id = TaxId::new("SE123456789101").unwrap();
+        #[cfg(feature="eu_vat")]
+        let value = "SE123456789101";
+        #[cfg(feature="gb_vat")]
+        let value = "GB123456789";
+        #[cfg(feature="ch_vat")]
+        let value = "CHE123456789";
+        #[cfg(feature = "no_vat")]
+        let value = "NO123456789";
+        
+        let tax_id = TaxId::new(value).unwrap();
         let verifier = TestVerifier;
         let verification = verifier.verify(&tax_id).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Verified);
