@@ -158,22 +158,73 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_syntax_failed_validation() {
-        let validation = TaxId::validate_syntax("SE12");
-        assert!(validation.is_err());
-        assert_eq!(validation.unwrap_err(), ValidationError::InvalidSyntax);
-    }
-
-    #[test]
-    fn test_new_failed_validation() {
+    fn test_new_unsupported_country() {
         let tax_id = TaxId::new("XX123456789");
         assert!(tax_id.is_err());
         assert_eq!(tax_id.unwrap_err(), ValidationError::UnsupportedCountryCode("XX".to_string()));
     }
 
+
+    #[cfg(feature = "eu_vat")]
     #[test]
-    fn test_new_unsupported_country_code_err() {
+    fn test_validate_eu_syntax_fail() {
+        let validation = TaxId::validate_syntax("SE12");
+        assert!(validation.is_err());
+        assert_eq!(validation.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "gb_vat")]
+    #[test]
+    fn test_validate_gb_syntax_fail() {
+        let validation = TaxId::validate_syntax("GB12");
+        assert!(validation.is_err());
+        assert_eq!(validation.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "ch_vat")]
+    #[test]
+    fn test_validate_ch_syntax_fail() {
+        let validation = TaxId::validate_syntax("CHE12");
+        assert!(validation.is_err());
+        assert_eq!(validation.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "no_vat")]
+    #[test]
+    fn test_validate_no_syntax_fail() {
+        let validation = TaxId::validate_syntax("NO12");
+        assert!(validation.is_err());
+        assert_eq!(validation.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "eu_vat")]
+    #[test]
+    fn test_eu_new_unsupported_country_code_err() {
         let tax_id = TaxId::new("SE12");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "gb_vat")]
+    #[test]
+    fn test_new_gb_unsupported_country_code_err() {
+        let tax_id = TaxId::new("GB12");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "ch_vat")]
+    #[test]
+    fn test_new_ch_unsupported_country_code_err() {
+        let tax_id = TaxId::new("CHE12");
+        assert!(tax_id.is_err());
+        assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
+    }
+
+    #[cfg(feature = "no_vat")]
+    #[test]
+    fn test_new_no_unsupported_country_code_err() {
+        let tax_id = TaxId::new("NO12");
         assert!(tax_id.is_err());
         assert_eq!(tax_id.unwrap_err(), ValidationError::InvalidSyntax);
     }
