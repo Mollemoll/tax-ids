@@ -47,9 +47,6 @@ trait TaxIdType {
     }
     fn country_code_from_tax_country(&self, tax_country_code: &str) -> String;
     fn verifier(&self) -> Box<dyn Verifier>;
-    fn verify(&self, tax_id: &TaxId) -> Result<Verification, VerificationError> {
-        self.verifier().verify(tax_id)
-    }
 }
 
 pub struct TaxId {
