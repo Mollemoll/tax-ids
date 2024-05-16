@@ -122,26 +122,25 @@ fn main () {
 
 ### Tax Id Types
 
-| Tax Id Type | Authority             | Lookup                                                                          | Documentation                                                                                                                                                      |
-|-------------|-----------------------|---------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `eu_vat`    | VIES                  | [VIES](https://ec.europa.eu/taxation_customs/vies/)                             | [VIES](https://ec.europa.eu/taxation_customs/vies/faqvies.do)                                                                                                      |
-| `gb_vat`    | HMRC                  | [HMRC](https://www.tax.service.gov.uk/check-vat-number/enter-vat-details)       | -                                                                                                                                                                  |
-| `ch_vat`    | BFS                   | [BFS](https://www.uid.admin.ch/Search.aspx?lang=en)                             | [BFS](https://www.bfs.admin.ch/bfs/fr/home/registres/registre-entreprises/numero-identification-entreprises/registre-ide/interfaces-ide.assetdetail.11007266.html) |
-| `no_vat`    | Brønnøysundregistrene | [Brønnøysundregistrene](https://data.brreg.no/enhetsregisteret/oppslag/enheter) | [Brønnøysundregistrene](https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/index.html#tag/Enheter/operation/hentEnhet)                                    |
+| Tax Id Type | Authority                                                                                                   | Manual lookup                                                           | Documentation                                                                                                                                                     |
+|-------------|-------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `eu_vat`    | [VIES](https://ec.europa.eu/taxation_customs/vies/#/faq)                                                    | [🔍](https://ec.europa.eu/taxation_customs/vies/)                       | [📖](https://ec.europa.eu/taxation_customs/vies/#/technical-information) + [Availability](https://ec.europa.eu/taxation_customs/vies/#/help)                      |
+| `gb_vat`    | [HMRC](https://www.gov.uk/government/organisations/hm-revenue-customs)                                      | [🔍](https://www.tax.service.gov.uk/check-vat-number/enter-vat-details) | [📖](https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-registered-companies-api/1.0/oas/page)                                          |
+| `ch_vat`    | [BFS](https://www.bfs.admin.ch/bfs/en/home/registers/enterprise-register/business-enterprise-register.html) | [🔍](https://www.uid.admin.ch/Search.aspx?lang=en)                      | [📖](https://www.bfs.admin.ch/bfs/fr/home/registres/registre-entreprises/numero-identification-entreprises/registre-ide/interfaces-ide.assetdetail.11007266.html) |
+| `no_vat`    | [Brønnøysundregistrene](https://www.brreg.no/)                                                              | [🔍](https://data.brreg.no/enhetsregisteret/oppslag/enheter)            | [📖](https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/index.html#tag/Enheter/operation/hentEnhet)                                                      |
 
-
-## License
+### License
 
 Licensed under either of
 
-* Apache License, Version 2.0
-  ([LICENSE-APACHE](LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-* MIT license
-  ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- Apache License, Version 2.0
+  ([LICENSE-APACHE](https://github.com/Mollemoll/tax-ids?tab=Apache-2.0-1-ov-file) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license
+  ([LICENSE-MIT](https://github.com/Mollemoll/tax-ids?tab=MIT-2-ov-file) or <http://opensource.org/licenses/MIT>)
 
 at your option.
 
-## Contribution
+### Contribution
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
