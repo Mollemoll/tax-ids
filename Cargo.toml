@@ -8,6 +8,9 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/Mollemoll/tax-ids"
 keywords = ["tax", "vat", "vies", "eu"]
 categories = ["finance", "api-bindings", "localization", "parser-implementations"]
+exclude = [
+    ".github/**/*",
+]
 
 [dependencies]
 lazy_static = "1.4.0"
@@ -25,4 +28,3 @@ eu_vat = ["roxmltree"]
 gb_vat = []
 ch_vat = ["roxmltree"]
 no_vat = ["toml"]
-
