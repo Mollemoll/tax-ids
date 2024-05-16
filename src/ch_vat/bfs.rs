@@ -125,6 +125,7 @@ impl Verifier for Bfs {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_bfs_xml_to_hash() {
         let xml = r#"
@@ -142,6 +143,7 @@ mod tests {
         assert_eq!(hash.get("ValidateVatNumberResult"), Some(&Some("true".to_string())));
     }
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_parse_response_verified() {
         let response = VerificationResponse::new(
@@ -166,6 +168,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_parse_response_unverified() {
         let response = VerificationResponse::new(
@@ -190,6 +193,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_parse_response_unavailable() {
         let response = VerificationResponse::new(
@@ -226,6 +230,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_parse_response_unavailable_unexpected_faultstring() {
         let response = VerificationResponse::new(
@@ -253,6 +258,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_parse_response_unexpected_response_value() {
         let response = VerificationResponse::new(
@@ -279,6 +285,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_parse_response_empty_response_value() {
         let response = VerificationResponse::new(

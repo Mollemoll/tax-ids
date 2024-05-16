@@ -65,6 +65,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_at_vat() {
         let valid_vat_numbers = vec!["ATU12345678", "ATU87654321"];
@@ -73,6 +74,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_be_vat() {
         let valid_vat_numbers = vec!["BE0123456789", "BE0987654321"];
@@ -86,6 +88,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_bg_vat() {
         let valid_vat_numbers = vec!["BG123456789", "BG1234567890"];
@@ -94,6 +97,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_cy_vat() {
         let valid_vat_numbers = vec!["CY12345678A", "CY98765432Z"];
@@ -102,6 +106,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_cz_vat() {
         let valid_vat_numbers = vec!["CZ12345678", "CZ123456789", "CZ1234567890"];
@@ -110,6 +115,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_de_vat() {
         let valid_vat_numbers = vec!["DE123456789", "DE987654321"];
@@ -118,6 +124,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_dk_vat() {
         let valid_vat_numbers = vec!["DK12345678"];
@@ -126,6 +133,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_ee_vat() {
         let valid_vat_numbers = vec!["EE101234567"];
@@ -134,6 +142,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_el_vat() {
         let valid_vat_numbers = vec!["EL123456789"];
@@ -142,6 +151,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_es_vat() {
         let valid_vat_numbers = vec!["ESX12345678", "ES12345678Z", "ESX1234567Z"];
@@ -150,6 +160,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_fi_vat() {
         let valid_vat_numbers = vec!["FI12345678"];
@@ -158,6 +169,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_fr_vat() {
         let valid_vat_numbers = vec!["FR12345678901", "FRX1234567890"];
@@ -166,6 +178,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_hr_vat() {
         let valid_vat_numbers = vec!["HR12345678901"];
@@ -174,6 +187,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_hu_vat() {
         let valid_vat_numbers = vec!["HU12345678"];
@@ -182,6 +196,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_ie_vat() {
         let valid_vat_numbers = vec!["IE1234567A", "IE1A23456A", "IE1234567AA"];
@@ -190,6 +205,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_it_vat() {
         let valid_vat_numbers = vec!["IT12345678901"];
@@ -198,6 +214,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_lt_vat() {
         let valid_vat_numbers = vec!["LT999999919", "LT999999919"];
@@ -206,6 +223,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_lu_vat() {
         let valid_vat_numbers = vec!["LU12345678"];
@@ -214,6 +232,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_lv_vat() {
         let valid_vat_numbers = vec!["LV12345678901"];
@@ -222,6 +241,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_mt_vat() {
         let valid_vat_numbers = vec!["MT12345678"];
@@ -230,6 +250,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_nl_vat() {
         let valid_vat_numbers = vec!["NL123456789B01"];
@@ -238,6 +259,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_pl_vat() {
         let valid_vat_numbers = vec!["PL1234567890"];
@@ -246,6 +268,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_pt_vat() {
         let valid_vat_numbers = vec!["PT123456789"];
@@ -254,6 +277,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_ro_vat() {
         let valid_vat_numbers = vec!["RO99999999", "RO999999999"];
@@ -262,6 +286,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_se_vat() {
         let valid_vat_numbers = vec!["SE123456789101"];
@@ -270,6 +295,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_si_vat() {
         let valid_vat_numbers = vec!["SI12345678"];
@@ -278,6 +304,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_sk_vat() {
         let valid_vat_numbers = vec!["SK1234567890"];
@@ -286,6 +313,7 @@ mod tests {
         assert_validations(valid_vat_numbers, invalid_vat_numbers);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_xi_vat() {
         let valid_vat_numbers = vec!["XI123456789", "XI987654321", "XIHA123", "XIGD123"];

@@ -123,22 +123,37 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_verify() {
-        #[cfg(feature="eu_vat")]
-        let value = "SE123456789101";
-        #[cfg(feature="gb_vat")]
-        let value = "GB123456789";
-        #[cfg(feature="ch_vat")]
-        let value = "CHE123456789";
-        #[cfg(feature = "no_vat")]
-        let value = "NO123456789";
-        
+    fn test_verify_for(value: &str) {
         let tax_id = TaxId::new(value).unwrap();
         let verifier = TestVerifier;
         let verification = verifier.verify(&tax_id).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
         assert_eq!(verification.data().get("key").unwrap(), "value");
+    }
+
+
+    #[cfg(feature="eu_vat")]
+    #[test]
+    fn test_verify_for_eu() {
+        test_verify_for("SE123456789101");
+    }
+
+    #[cfg(feature="gb_vat")]
+    #[test]
+    fn test_verify_for_gb() {
+        test_verify_for("GB123456789");
+    }
+
+    #[cfg(feature="ch_vat")]
+    #[test]
+    fn test_verify_for_ch() {
+        test_verify_for("CHE123456789");
+    }
+
+    #[cfg(feature="no_vat")]
+    #[test]
+    fn test_verify_for_no() {
+        test_verify_for("NO123456789");
     }
 }

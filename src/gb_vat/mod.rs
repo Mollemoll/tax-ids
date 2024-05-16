@@ -45,6 +45,7 @@ mod tests {
     use crate::gb_vat::GbVat;
     use crate::TaxIdType;
 
+    #[cfg(feature = "gb_vat")]
     #[test]
     fn test_gb_vat() {
         let valid_vat_numbers = vec![

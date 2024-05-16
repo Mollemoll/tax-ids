@@ -42,6 +42,8 @@ lazy_static! {
 mod tests {
     use super::*;
     use crate::eu_vat::COUNTRIES;
+
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_each_eu_country_has_a_regex() {
         let mut eu_regex_countries = EU_VAT_PATTERNS.keys().collect::<Vec<&String>>();
