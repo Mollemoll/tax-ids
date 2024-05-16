@@ -20,11 +20,19 @@ impl VerificationResponse {
     pub fn body(&self) -> &str { &self.body }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum VerificationStatus {
     Verified,
     Unverified,
-    Unavailable,
+    Unavailable(UnavailableReason),
+}
+
+#[derive(Debug, PartialEq, Clone, Copy)]
+pub enum UnavailableReason {
+    ServiceUnavailable,
+    Timeout,
+    Block,
+    RateLimit,
 }
 
 #[derive(Debug, PartialEq)]
