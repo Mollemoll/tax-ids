@@ -46,6 +46,7 @@ impl TaxIdType for NoVat {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_extract_org_number() {
         let tax_id = TaxId::new("NO123456789MVA").unwrap();
@@ -53,6 +54,7 @@ mod tests {
         assert_eq!(NoVat::extract_org_number(&NoVat, &tax_id), "123456789");
     }
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_no_vats() {
         let valid_vat_numbers = vec![

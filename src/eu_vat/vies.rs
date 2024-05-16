@@ -155,6 +155,7 @@ impl Verifier for Vies {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_xml_to_hash() {
         let xml = r#"
@@ -183,6 +184,7 @@ mod tests {
         assert_eq!(hash.get("address"), Some(&None));
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_parse_response_verified() {
         let response = VerificationResponse::new(
@@ -209,6 +211,7 @@ mod tests {
         assert_eq!(verification.status(), &VerificationStatus::Verified);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_parse_response_unverified() {
         let response = VerificationResponse::new(
@@ -235,6 +238,7 @@ mod tests {
         assert_eq!(verification.status(), &VerificationStatus::Unverified);
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_parse_response_unavailable() {
         let response = VerificationResponse::new(
@@ -261,6 +265,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_parse_response_missing_valid_field() {
         let response = VerificationResponse::new(
@@ -287,6 +292,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_parse_response_invalid_validity_value() {
         let response = VerificationResponse::new(

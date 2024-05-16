@@ -113,6 +113,7 @@ impl Verifier for BrReg {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_verified() {
         let response = VerificationResponse::new(
@@ -162,6 +163,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unverified_due_to_not_found() {
         let response = VerificationResponse::new(
@@ -175,6 +177,7 @@ mod tests {
         assert_eq!(verification.data(), &json!({}));
     }
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unverified_due_to_qualification() {
         let response = VerificationResponse::new(
@@ -202,6 +205,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unverified_due_to_deleted() {
         let response = VerificationResponse::new(
@@ -223,6 +227,7 @@ mod tests {
         assert_eq!(verification.data(), &json!({}));
     }
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unavailable() {
         let response = VerificationResponse::new(
@@ -252,6 +257,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unexpected_status_code() {
         let response = VerificationResponse::new(

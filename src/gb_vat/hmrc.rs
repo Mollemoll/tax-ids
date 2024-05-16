@@ -11,6 +11,7 @@ use crate::verification::UnavailableReason::ServiceUnavailable;
 
 static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 const NOT_FOUND: &str = "NOT_FOUND";
+#[allow(dead_code)]
 const SERVER_ERROR: &str = "SERVER_ERROR";
 
 
@@ -69,6 +70,7 @@ impl Verifier for Hmrc {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "gb_vat")]
     #[test]
     fn test_parse_response_verified() {
         let response = VerificationResponse::new(
@@ -108,6 +110,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "gb_vat")]
     #[test]
     fn test_parse_response_unverified() {
         let response = VerificationResponse::new(
@@ -128,6 +131,7 @@ mod tests {
         }));
     }
 
+    #[cfg(feature = "gb_vat")]
     #[test]
     fn test_parse_response_unavailable() {
         let response = VerificationResponse::new(

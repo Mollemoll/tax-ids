@@ -43,6 +43,7 @@ impl TaxIdType for ChVat {
 mod tests {
     use super::*;
 
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_ch_vats() {
         let valid_vat_numbers = vec![
