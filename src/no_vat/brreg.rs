@@ -3,10 +3,12 @@ use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT};
 use serde_json::{json, Value};
 use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
+use crate::verification::VerificationStatus::{*};
 use crate::errors::VerificationError;
 use crate::no_vat::NoVat;
 use crate::no_vat::translator::translate_keys;
 use crate::TaxId;
+use crate::verification::UnavailableReason::{ServiceUnavailable};
 
 // INFO(2024-05-08 mollemoll):
 // Data from Brønnøysund Register Centre
@@ -49,9 +51,9 @@ impl BrReg {
         }
 
         if valid {
-            VerificationStatus::Verified
+            Verified
         } else {
-            VerificationStatus::Unverified
+            Unverified
         }
     }
 }
@@ -77,7 +79,7 @@ impl Verifier for BrReg {
         match response.status() {
             404 | 410 => return Ok(
                 Verification::new(
-                    VerificationStatus::Unverified, json!({})
+                    Unverified, json!({})
                 )
             ),
             200 | 500 => {
@@ -87,7 +89,12 @@ impl Verifier for BrReg {
                 let hash = v.as_object().unwrap();
 
                 if response.status() == 500 {
-                    return Ok(Verification::new(VerificationStatus::Unavailable, json!(hash)));
+                    return Ok(
+                        Verification::new(
+                            Unavailable(ServiceUnavailable),
+                            json!(hash)
+                        )
+                    );
                 }
 
                 Ok(
@@ -133,7 +140,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
-        assert_eq!(verification.status(), &VerificationStatus::Verified);
+        assert_eq!(verification.status(), &Verified);
         assert_eq!(verification.data(), &json!({
             "organizationNumber": "123456789",
             "name": "Test Company AS",
@@ -164,7 +171,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
-        assert_eq!(verification.status(), &VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({}));
     }
 
@@ -184,7 +191,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
-        assert_eq!(verification.status(), &VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({
             "organizationNumber": "123456789",
             "name": "Test Company AS",
@@ -212,7 +219,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
-        assert_eq!(verification.status(), &VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({}));
     }
 
@@ -234,7 +241,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
-        assert_eq!(verification.status(), &VerificationStatus::Unavailable);
+        assert_eq!(verification.status(), &Unavailable(ServiceUnavailable));
         assert_eq!(verification.data(), &json!({
             "timestamp": "2024-01-05T07:36:21.523+0000",
             "status": 500,

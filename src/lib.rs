@@ -24,7 +24,7 @@ use std::fmt;
 use regex::Regex;
 use syntax::SYNTAX;
 use verification::{Verifier};
-pub use verification::{Verification, VerificationStatus};
+pub use verification::{Verification, VerificationStatus, UnavailableReason};
 pub use errors::{ValidationError, VerificationError};
 
 

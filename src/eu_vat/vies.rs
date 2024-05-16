@@ -1,9 +1,13 @@
 use std::collections::HashMap;
+use lazy_static::lazy_static;
+
 use roxmltree;
 use serde_json::json;
-use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
+
 use crate::errors::VerificationError;
 use crate::TaxId;
+use crate::verification::{Verification, VerificationResponse, VerificationStatus, UnavailableReason, Verifier};
+use crate::verification::UnavailableReason::{*};
 
 // INFO(2024-05-08 mollemoll):
 // Data from Vies
@@ -21,6 +25,23 @@ static ENVELOPE: &'static str = "
     </soapenv:Body>
 </soapenv:Envelope>
 ";
+
+lazy_static! {
+    pub static ref FAULT_MAP: HashMap<&'static str, UnavailableReason> = {
+        let mut m = HashMap::new();
+        m.insert("SERVICE_UNAVAILABLE", ServiceUnavailable);
+        m.insert("MS_UNAVAILABLE", ServiceUnavailable);
+        // Not implemented: 'INVALID_REQUESTER_INFO'
+        m.insert("TIMEOUT", Timeout);
+        m.insert("VAT_BLOCKED", Block);
+        m.insert("IP_BLOCKED", Block);
+        m.insert("GLOBAL_MAX_CONCURRENT_REQ", RateLimit);
+        m.insert("GLOBAL_MAX_CONCURRENT_REQ_TIME", RateLimit);
+        m.insert("MS_MAX_CONCURRENT_REQ", RateLimit);
+        m.insert("MS_MAX_CONCURRENT_REQ_TIME", RateLimit);
+        m
+    };
+}
 
 #[derive(Debug)]
 pub struct Vies;
@@ -78,7 +99,16 @@ impl Verifier for Vies {
             .and_then(|x| x.as_deref());
 
         let verification_status = match fault_string {
-            Some(_) => VerificationStatus::Unavailable,
+            Some(fault) => {
+                match FAULT_MAP.get(fault){
+                    Some(reason) => VerificationStatus::Unavailable(*reason),
+                    None => {
+                        return Err(VerificationError::UnexpectedResponse(
+                            format!("Unknown fault code: {}", fault)
+                        ));
+                    }
+                }
+            }
             None => {
                 let validity_value = hash.get("valid")
                     .and_then(|x| x.as_deref());
@@ -212,7 +242,7 @@ mod tests {
         let verifier = Vies;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Unavailable);
+        assert_eq!(verification.status(), &VerificationStatus::Unavailable(UnavailableReason::RateLimit));
         assert_eq!(verification.data(), &json!({
             "faultcode": "env:Server",
             "faultstring": "MS_MAX_CONCURRENT_REQ"

@@ -1,12 +1,13 @@
 use serde_json::json;
 use crate::errors::VerificationError;
 use crate::TaxId;
-use crate::verification::{Verification, VerificationResponse, VerificationStatus, Verifier};
+use crate::verification::{Verification, VerificationResponse, VerificationStatus::{*}, Verifier};
+use crate::verification::UnavailableReason::ServiceUnavailable;
 
 // INFO(2024-05-08 mollemoll):
 // Data from HMRC
 // https://www.tax.service.gov.uk/check-vat-number/enter-vat-details
-// https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-api/1.0
+// https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-registered-companies-api/1.0/oas/page
 
 static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 
@@ -39,19 +40,19 @@ impl Verifier for Hmrc {
         let verification_result = match fault {
             None => {
                 Verification::new(
-                    VerificationStatus::Verified,
+                    Verified,
                     json!(hash.get("target"))
                 )
             },
             Some(fault_code) if fault_code == "NOT_FOUND" => {
                 Verification::new(
-                    VerificationStatus::Unverified,
+                    Unverified,
                     json!(hash)
                 )
             },
             Some(_) => {
                 Verification::new(
-                    VerificationStatus::Unavailable,
+                    Unavailable(ServiceUnavailable),
                     json!(hash)
                 )
             },
@@ -89,7 +90,7 @@ mod tests {
         let verifier = Hmrc;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Verified);
+        assert_eq!(verification.status(), &Verified);
         assert_eq!(verification.data(), &json!({
             "name": "VIRGIN ATLANTIC AIRWAYS LTD",
             "vatNumber": "425216184",
@@ -117,7 +118,7 @@ mod tests {
         let verifier = Hmrc;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({
             "code": "NOT_FOUND",
             "reason": "targetVrn does not match a registered company"
@@ -136,7 +137,7 @@ mod tests {
         let verifier = Hmrc;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Unavailable);
+        assert_eq!(verification.status(), &Unavailable(ServiceUnavailable));
         assert_eq!(verification.data().get("code").unwrap(), "SERVER_ERROR");
     }
 }
