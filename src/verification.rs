@@ -22,8 +22,11 @@ impl VerificationResponse {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum VerificationStatus {
+    /// Represents a successful verification where the government database confirmed the ID as legitimate.
     Verified,
+    /// Represents an unsuccessful verification where the government database identified the ID as illegitimate.
     Unverified,
+    /// Represents a case where verification was not possible due to certain reasons (e.g., government database was unavailable).
     Unavailable(UnavailableReason),
 }
 
@@ -43,6 +46,7 @@ pub struct Verification {
 }
 
 impl Verification {
+    #[doc(hidden)]
     pub fn new(status: VerificationStatus, data: serde_json::Value) -> Verification {
         Verification {
             performed_at: Local::now(),
@@ -51,7 +55,21 @@ impl Verification {
         }
     }
 
+    /// This VerificationStatus is what the crate user should use to determine how to proceed.
+    ///
+    /// A checkout example:
+    /// - Enable/process the transaction upon `VerificationStatus::Verified`.
+    /// - Block transaction/provide a validation msg upon `VerificationStatus::Unverified`.
+    /// - Enable/process the transaction upon `VerificationStatus::Unavailable` but perform a
+    ///     re-verification at a later stage.
     pub fn status(&self) -> &VerificationStatus { &self.status }
+    /// Additional data selected by the crate owner from the government database response.
+    /// This data can be used to provide more context about the verification.
+    /// The data is in JSON format.
+    ///
+    /// Includes error details in case of an unsuccessful verification.
+    ///
+    /// Subject to change in future versions.
     pub fn data(&self) -> &serde_json::Value { &self.data }
 }
 

@@ -4,9 +4,11 @@ use std::fmt::Debug;
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum ValidationError {
     #[error("Country code {0} is not supported")]
+    /// The country code is not supported
     UnsupportedCountryCode(String),
 
     #[error("Invalid syntax")]
+    /// The syntax of the tax id is invalid for the given country
     InvalidSyntax,
 }
 

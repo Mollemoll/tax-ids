@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+
 mod errors;
 mod verification;
 mod syntax;
@@ -66,6 +68,8 @@ impl fmt::Debug for TaxId {
 }
 
 impl TaxId {
+    /// Use this associated function to validate the syntax of a given tax id number against
+    /// its country-specific regex pattern without creating any TaxId.
     pub fn validate_syntax(value: &str) -> Result<(), ValidationError> {
         let tax_country_code = &value[0..2];
         SYNTAX.get(tax_country_code)
@@ -79,6 +83,9 @@ impl TaxId {
             })
     }
 
+    /// Constructs a TaxId after validating its syntax based on the country-specific regex pattern.
+    /// If the syntax validation is successful, the returned TaxId can be used for further
+    /// verification against the corresponding government database.
     pub fn new(value: &str) -> Result<TaxId, ValidationError> {
         let tax_country_code = &value[0..2];
         let local_value = &value[2..];
@@ -106,15 +113,28 @@ impl TaxId {
         })
     }
 
+    /// Performs a request to verify the tax id against the corresponding government database.
     pub fn verify(&self) -> Result<Verification, VerificationError> {
         self.id_type.verifier().verify(self)
     }
 
+    /// Returns the full tax id value. IE: SE556703748501
     pub fn value(&self) -> &str { &self.value }
+    /// Returns the country code. IE: SE
     pub fn country_code(&self) -> &str { &self.country_code }
+    /// Returns the tax country code. IE: SE
+    ///
+    /// This is the same as the country code for most countries, but not for XI and EL.
+    ///
+    /// XI is the tax country code that Northern Ireland business (the United Kingdom) should use
+    /// while trading with the EU. A consequence of Brexit.
+    ///
+    /// EL is the tax country code for Greece.
     pub fn tax_country_code(&self) -> &str { &self.tax_country_code }
+    /// Returns the local value of the tax id. IE: 556703748501
     pub fn local_value(&self) -> &str { &self.local_value }
 
+    /// Returns the type of tax id in snake_case. IE: eu_vat, gb_vat, ch_va or no_vat
     pub fn tax_id_type(&self) -> &str { self.id_type.name() }
     fn id_type(&self) -> &Box<dyn TaxIdType> { &self.id_type }
 }
