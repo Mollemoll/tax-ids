@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
 use roxmltree;
 use serde_json::json;
-use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
+use crate::verification::{Verifier, Verification, VerificationStatus::{*}, VerificationResponse, UnavailableReason::{*}};
 use crate::errors::VerificationError;
 use crate::TaxId;
 
@@ -97,16 +97,16 @@ impl Verifier for Bfs {
             .and_then(|x| x.as_deref());
 
         let status = match fault_string {
-            Some("Data_validation_failed") => VerificationStatus::Unverified,
-            Some("Request_limit_exceeded") => VerificationStatus::Unavailable,
+            Some("Data_validation_failed") => Unverified,
+            Some("Request_limit_exceeded") => Unavailable(RateLimit),
             Some(_) => return Err(VerificationError::UnexpectedResponse(
                 format!("Unexpected faultstring: {}", fault_string.unwrap().to_string())
             )),
             None => {
                 let result = hash.get("ValidateVatNumberResult").and_then(|x| x.as_deref());
                 match result {
-                    Some("true") => VerificationStatus::Verified,
-                    Some("false") => VerificationStatus::Unverified,
+                    Some("true") => Verified,
+                    Some("false") => Unverified,
                     None | Some(_) => return Err(VerificationError::UnexpectedResponse(
                         "ValidateVatNumberResult should be 'true' or 'false'".to_string()
                     )),
@@ -157,7 +157,7 @@ mod tests {
         let verifier = Bfs;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Verified);
+        assert_eq!(verification.status(), &Verified);
         assert_eq!(verification.data(), &json!({
             "ValidateVatNumberResult": "true"
         }));
@@ -181,7 +181,7 @@ mod tests {
         let verifier = Bfs;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Unverified);
+        assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({
             "ValidateVatNumberResult": "false"
         }));
@@ -213,7 +213,7 @@ mod tests {
         let verifier = Bfs;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Unavailable);
+        assert_eq!(verification.status(), &Unavailable(RateLimit));
         assert_eq!(verification.data(), &json!({
             "error": "Request_limit_exceeded",
             "errorDetail": "Maximum number of 20 requests per 1 minute(s) exceeded",
