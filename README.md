@@ -38,8 +38,10 @@ tax_ids = { version = "0.1.0", features = ["eu_vat", "gb_vat"] }
 
 ```rust
 use tax_ids::TaxId;
+use tax_ids::VerificationStatus::{Verified, Unverified, Unavailable};
+use tax_ids::UnavailableReason::{ServiceUnavailable, Timeout, Block, RateLimit};
 
-fn main () {
+fn main() {
   // Instantiate a new TaxId object. This can raise a ValidationError.
   let tax_id = match TaxId::new("SE556703748501") {
     Ok(tax_id) => tax_id,
@@ -73,27 +75,37 @@ fn main () {
     Err(e) => {
       println!("VerificationError: {}", e);
       return;
-    },
+    }
   };
-  
-  assert_eq!(verification.status(), &tax_ids::VerificationStatus::Verified);
+
+  assert_eq!(verification.status(), &Verified);
 
   // VerificationStatus can take one out of three different statuses:
   // - Verified - The tax ID is legitimate.
   // - Unverified - The tax ID is not legitimate.
-  // - Unavailable - The verification couldn't be performed (due to rate limit, database unavailability, etc.).
+  // - Unavailable(UnavailableReason) - The verification couldn't be performed due to some reason.
 
   // These statuses are what you want to act upon.
   match verification.status() {
-    tax_ids::VerificationStatus::Verified => {
+    Verified => {
       // Proceed with payment
-    },
-    tax_ids::VerificationStatus::Unverified => {
+    }
+    Unverified => {
       // Ask the customer to provide a proper tax ID
-    },
-    tax_ids::VerificationStatus::Unavailable => {
+    }
+    Unavailable(reason) => {
       // Process payment and verify the tax ID later?
-    },
+      
+      match reason {
+        ServiceUnavailable | Timeout => {},
+        Block => {
+          // Adapt to your IP / VAT being blocked
+        }
+        RateLimit => {
+          // Consider how to avoid rate limiting
+        }
+      }
+    }
   }
 
   // The full verification object:
