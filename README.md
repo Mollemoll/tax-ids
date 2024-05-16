@@ -1,23 +1,22 @@
 # Tax Ids
 
-This crate provides a solution for verifying tax ids (VAT/GST) for businesses operating
-within the European Union, the United Kingdom, Switzerland, and Norway.
+This crate offers a solution for validating tax IDs (VAT/GST) for businesses operating within the European Union,
+the United Kingdom, Switzerland, and Norway.
 
-So far, the library provides the following functionality:
-
-- Validate the syntax of a tax id against its type specific regex pattern.
-- Verify the tax id in the appropriate government database (based on the tax id type).
+Currently, the library provides the following functionalities:  
+- Validates the syntax of a tax ID against its type-specific regex pattern.
+- Verifies the tax ID in the relevant government database (based on the tax ID type).
 
 The library has been inspired by the [valvat](https://github.com/yolk/valvat) library for Ruby.
 
-### Available features
+### Available features / tax id types
 
-| Feature  | Description                | Default |
-|----------|----------------------------|---------|
-| `eu_vat` | European Union VAT numbers | ✓       |
-| `gb_vat` | United Kingdom VAT numbers |         |
-| `ch_vat` | Switzerland VAT numbers    |         |
-| `no_vat` | Norway VAT numbers         |         |
+| Feature  | Description        | Default |
+|----------|--------------------|---------|
+| `eu_vat` | European Union VAT | ✓       |
+| `gb_vat` | United Kingdom VAT |         |
+| `ch_vat` | Switzerland VAT    |         |
+| `no_vat` | Norway VAT         |         |
 
 More info at [Tax Id Types](#tax-id-types).
 
@@ -41,89 +40,83 @@ tax_ids = { version = "0.1.0", features = ["eu_vat", "gb_vat"] }
 use tax_ids::TaxId;
 
 fn main () {
-    // Instantiate a new TaxId object. Can raise a ValidationError.
-    let tax_id = match TaxId::new("SE556703748501") {
-        Ok(tax_id) => tax_id,
-        Err(e) => {
-            println!("ValidationError: {}", e);
-            return;
-        }
-    };
-
-    println!("Tax Id: {}", tax_id.value());
-    println!("Country code: {}", tax_id.country_code());
-    println!("Tax country code: {}", tax_id.tax_country_code());
-    println!("Local value: {}", tax_id.local_value());
-    println!("Id type: {}", tax_id.tax_id_type());
-
-    // Tax Id: SE556703748501
-    // Country code: SE
-    // Tax country code: SE
-    // Local value: 556703748501
-    // Id type: eu_vat
-
-    // Country code is the 2-char iso code of the country
-    // Often the same as the tax country code, but not always.
-    // Example country code GR for Greece, but EL for the Greek VAT number.
-
-    // The United Kingdom, has country code GB and tax country code GB.
-    // However, as a consequence of Brexit, businesses in Northern Ireland
-    // have country code GB but use VAT number/tax country code XI when trading
-    // with EU.
-
-    // Verification
-
-    // Perform a verification request against the country's tax id database.
-    // Can raise a VerificationError
-    let verification = match tax_id.verify() {
-        Ok(verification) => verification,
-        Err(e) => {
-            println!("VerificationError: {}", e);
-            return;
-        },
-    };
-
-    println!("Verification status: {:?}", verification.status());
-
-    // Verification can come back with one out of three different statuses:
-    // - Verified - The tax id is legitimate.
-    // - Unverified - The tax id is not legitimate.
-    // - Unavailable - The verification couldn't be performed (rate limit, database unavailable etc.).
-
-    // These statuses are what you want to act upon.
-    match verification.status() {
-        tax_ids::VerificationStatus::Verified => {
-            // Proceed payment
-        },
-        tax_ids::VerificationStatus::Unverified => {
-            // Ask customer to provide a valid tax id
-        },
-        tax_ids::VerificationStatus::Unavailable => {
-            // Process payment and verify the tax id later?
-        },
+  // Instantiate a new TaxId object. This can raise a ValidationError.
+  let tax_id = match TaxId::new("SE556703748501") {
+    Ok(tax_id) => tax_id,
+    Err(e) => {
+      println!("ValidationError: {}", e);
+      return;
     }
+  };
 
-    // The full verification object:
+  assert_eq!(tax_id.value(), "SE556703748501");
+  assert_eq!(tax_id.country_code(), "SE");
+  assert_eq!(tax_id.tax_country_code(), "SE");
+  assert_eq!(tax_id.local_value(), "556703748501");
+  assert_eq!(tax_id.tax_id_type(), "eu_vat");
 
-    println!("{:?}", verification);
+  // The country code is the 2-char ISO code of the country.
+  // It's often the same as the tax country code, but not always.
+  // For example, the country code for Greece is GR, but EL for the Greek VAT number.
 
-    // The data field is experimental and subject to change or removal.
-    // It will contain different data depending on what tax id type is being verified.
-    // And what response the verification service provides.
+  // The United Kingdom has a country code GB and tax country code GB.
+  // However, due to Brexit, businesses in Northern Ireland
+  // have a country code GB but use VAT number/tax country code XI when trading
+  // with the EU.
 
-    // Verification status: Verified
-    // Verification {
-    //    performed_at: 2024-05-15T14:38:31.388914+02:00,
-    //    status: Verified,
-    //    data: Object {
-    //        "address": String("REGERINGSGATAN 19 \n111 53 STOCKHOLM"),
-    //        "countryCode": String("SE"),
-    //        "name": String("Spotify AB"),
-    //        "requestDate": String("2024-05-15+02:00"),
-    //        "valid": String("true"),
-    //        "vatNumber": String("556703748501"
-    //    )}
-    // }
+  // Verification
+
+  // Perform a verification request against the country's tax ID database.
+  // This can raise a VerificationError.
+  let verification = match tax_id.verify() {
+    Ok(verification) => verification,
+    Err(e) => {
+      println!("VerificationError: {}", e);
+      return;
+    },
+  };
+  
+  assert_eq!(verification.status(), &tax_ids::VerificationStatus::Verified);
+
+  // VerificationStatus can take one out of three different statuses:
+  // - Verified - The tax ID is legitimate.
+  // - Unverified - The tax ID is not legitimate.
+  // - Unavailable - The verification couldn't be performed (due to rate limit, database unavailability, etc.).
+
+  // These statuses are what you want to act upon.
+  match verification.status() {
+    tax_ids::VerificationStatus::Verified => {
+      // Proceed with payment
+    },
+    tax_ids::VerificationStatus::Unverified => {
+      // Ask the customer to provide a proper tax ID
+    },
+    tax_ids::VerificationStatus::Unavailable => {
+      // Process payment and verify the tax ID later?
+    },
+  }
+
+  // The full verification object:
+
+  println!("{:?}", verification);
+
+  // The data field is experimental and subject to change or removal.
+  // It will contain different data depending on what tax ID type is being verified.
+  // And what response the verification service provides.
+
+  // Verification status: Verified
+  // Verification {
+  //    performed_at: 2024-05-15T14:38:31.388914+02:00,
+  //    status: Verified,
+  //    data: Object {
+  //        "address": String("REGERINGSGATAN 19 \n111 53 STOCKHOLM"),
+  //        "countryCode": String("SE"),
+  //        "name": String("Spotify AB"),
+  //        "requestDate": String("2024-05-15+02:00"),
+  //        "valid": String("true"),
+  //        "vatNumber": String("556703748501"
+  //    )}
+  // }
 }
 ```
 
