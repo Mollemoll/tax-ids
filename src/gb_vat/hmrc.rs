@@ -6,7 +6,7 @@ use crate::verification::{Verification, VerificationResponse, VerificationStatus
 // INFO(2024-05-08 mollemoll):
 // Data from HMRC
 // https://www.tax.service.gov.uk/check-vat-number/enter-vat-details
-// https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-api/1.0
+// https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-registered-companies-api/1.0/oas/page
 
 static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 
