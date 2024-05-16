@@ -26,19 +26,31 @@ static ENVELOPE: &'static str = "
 </soapenv:Envelope>
 ";
 
+// Vies FAULT codes
+const SERVICE_UNAVAILABLE: &str = "SERVICE_UNAVAILABLE";
+const MS_UNAVAILABLE: &str = "MS_UNAVAILABLE";
+// const INVALID_REQUESTER_INFO: &str = "INVALID_REQUESTER_INFO";
+const TIMEOUT: &str = "TIMEOUT";
+const VAT_BLOCKED: &str = "VAT_BLOCKED";
+const IP_BLOCKED: &str = "IP_BLOCKED";
+const GLOBAL_MAX_CONCURRENT_REQ: &str = "GLOBAL_MAX_CONCURRENT_REQ";
+const GLOBAL_MAX_CONCURRENT_REQ_TIME: &str = "GLOBAL_MAX_CONCURRENT_REQ_TIME";
+const MS_MAX_CONCURRENT_REQ: &str = "MS_MAX_CONCURRENT_REQ";
+const MS_MAX_CONCURRENT_REQ_TIME: &str = "MS_MAX_CONCURRENT_REQ_TIME";
+
 lazy_static! {
     pub static ref FAULT_MAP: HashMap<&'static str, UnavailableReason> = {
         let mut m = HashMap::new();
-        m.insert("SERVICE_UNAVAILABLE", ServiceUnavailable);
-        m.insert("MS_UNAVAILABLE", ServiceUnavailable);
+        m.insert(SERVICE_UNAVAILABLE, ServiceUnavailable);
+        m.insert(MS_UNAVAILABLE, ServiceUnavailable);
         // Not implemented: 'INVALID_REQUESTER_INFO'
-        m.insert("TIMEOUT", Timeout);
-        m.insert("VAT_BLOCKED", Block);
-        m.insert("IP_BLOCKED", Block);
-        m.insert("GLOBAL_MAX_CONCURRENT_REQ", RateLimit);
-        m.insert("GLOBAL_MAX_CONCURRENT_REQ_TIME", RateLimit);
-        m.insert("MS_MAX_CONCURRENT_REQ", RateLimit);
-        m.insert("MS_MAX_CONCURRENT_REQ_TIME", RateLimit);
+        m.insert(TIMEOUT, Timeout);
+        m.insert(VAT_BLOCKED, Block);
+        m.insert(IP_BLOCKED, Block);
+        m.insert(GLOBAL_MAX_CONCURRENT_REQ, RateLimit);
+        m.insert(GLOBAL_MAX_CONCURRENT_REQ_TIME, RateLimit);
+        m.insert(MS_MAX_CONCURRENT_REQ, RateLimit);
+        m.insert(MS_MAX_CONCURRENT_REQ_TIME, RateLimit);
         m
     };
 }
@@ -245,7 +257,7 @@ mod tests {
         assert_eq!(verification.status(), &VerificationStatus::Unavailable(UnavailableReason::RateLimit));
         assert_eq!(verification.data(), &json!({
             "faultcode": "env:Server",
-            "faultstring": "MS_MAX_CONCURRENT_REQ"
+            "faultstring": MS_MAX_CONCURRENT_REQ
         }));
     }
 

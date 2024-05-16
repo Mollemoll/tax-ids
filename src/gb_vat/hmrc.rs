@@ -10,6 +10,9 @@ use crate::verification::UnavailableReason::ServiceUnavailable;
 // https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-registered-companies-api/1.0/oas/page
 
 static BASE_URI: &'static str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
+const NOT_FOUND: &str = "NOT_FOUND";
+const SERVER_ERROR: &str = "SERVER_ERROR";
+
 
 #[derive(Debug)]
 pub struct Hmrc;
@@ -44,7 +47,7 @@ impl Verifier for Hmrc {
                     json!(hash.get("target"))
                 )
             },
-            Some(fault_code) if fault_code == "NOT_FOUND" => {
+            Some(fault_code) if fault_code == NOT_FOUND => {
                 Verification::new(
                     Unverified,
                     json!(hash)
@@ -138,6 +141,6 @@ mod tests {
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &Unavailable(ServiceUnavailable));
-        assert_eq!(verification.data().get("code").unwrap(), "SERVER_ERROR");
+        assert_eq!(verification.data().get("code").unwrap(), SERVER_ERROR);
     }
 }

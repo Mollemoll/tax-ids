@@ -26,6 +26,9 @@ static ENVELOPE: &'static str = "
     </soapenv:Envelope>
 ";
 
+const DATA_VALIDATION_FAILED: &str = "Data_validation_failed";
+const REQUEST_LIMIT_EXCEEDED: &str = "Request_limit_exceeded";
+
 lazy_static! {
     #[derive(Debug)]
     pub static ref HEADERS: HeaderMap = {
@@ -97,8 +100,8 @@ impl Verifier for Bfs {
             .and_then(|x| x.as_deref());
 
         let status = match fault_string {
-            Some("Data_validation_failed") => Unverified,
-            Some("Request_limit_exceeded") => Unavailable(RateLimit),
+            Some(DATA_VALIDATION_FAILED) => Unverified,
+            Some(REQUEST_LIMIT_EXCEEDED) => Unavailable(RateLimit),
             Some(_) => return Err(VerificationError::UnexpectedResponse(
                 format!("Unexpected faultstring: {}", fault_string.unwrap().to_string())
             )),
@@ -215,11 +218,11 @@ mod tests {
 
         assert_eq!(verification.status(), &Unavailable(RateLimit));
         assert_eq!(verification.data(), &json!({
-            "error": "Request_limit_exceeded",
+            "error": REQUEST_LIMIT_EXCEEDED,
             "errorDetail": "Maximum number of 20 requests per 1 minute(s) exceeded",
             "operation": "ValidateVatNumber",
             "faultcode": "s:Client",
-            "faultstring": "Request_limit_exceeded"
+            "faultstring": REQUEST_LIMIT_EXCEEDED
         }));
     }
 
