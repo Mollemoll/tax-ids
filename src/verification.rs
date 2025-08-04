@@ -1,6 +1,6 @@
-use chrono::prelude::*;
 use crate::errors::VerificationError;
 use crate::TaxId;
+use chrono::prelude::*;
 
 #[derive(Debug, PartialEq)]
 pub struct VerificationResponse {
@@ -10,14 +10,15 @@ pub struct VerificationResponse {
 
 impl VerificationResponse {
     pub fn new(status: u16, body: String) -> VerificationResponse {
-        VerificationResponse {
-            status,
-            body,
-        }
+        VerificationResponse { status, body }
     }
 
-    pub fn status(&self) -> u16 { self.status }
-    pub fn body(&self) -> &str { &self.body }
+    pub fn status(&self) -> u16 {
+        self.status
+    }
+    pub fn body(&self) -> &str {
+        &self.body
+    }
 }
 
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -62,7 +63,9 @@ impl Verification {
     /// - Block transaction/provide a validation msg upon `VerificationStatus::Unverified`.
     /// - Enable/process the transaction upon `VerificationStatus::Unavailable` but perform a
     ///     re-verification at a later stage.
-    pub fn status(&self) -> &VerificationStatus { &self.status }
+    pub fn status(&self) -> &VerificationStatus {
+        &self.status
+    }
     /// Additional data selected by the crate owner from the government database response.
     /// This data can be used to provide more context about the verification.
     /// The data is in JSON format.
@@ -70,7 +73,9 @@ impl Verification {
     /// Includes error details in case of an unsuccessful verification.
     ///
     /// Subject to change in future versions.
-    pub fn data(&self) -> &serde_json::Value { &self.data }
+    pub fn data(&self) -> &serde_json::Value {
+        &self.data
+    }
 }
 
 pub trait Verifier {
@@ -81,45 +86,47 @@ pub trait Verifier {
     }
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError>;
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError>;
+    fn parse_response(
+        &self,
+        response: VerificationResponse,
+    ) -> Result<Verification, VerificationError>;
 }
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
     use super::*;
+    use serde_json::json;
 
     #[test]
     fn test_new_verification() {
-        let verification = Verification::new(
-            VerificationStatus::Verified,
-            json!({})
-        );
+        let verification = Verification::new(VerificationStatus::Verified, json!({}));
         assert_eq!(verification.status(), &VerificationStatus::Verified);
-        assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
+        assert_eq!(
+            verification.performed_at.date_naive(),
+            Local::now().date_naive()
+        );
     }
 
     struct TestVerifier;
 
     impl Verifier for TestVerifier {
         fn make_request(&self, _tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
-            Ok(VerificationResponse::new(
-                200,
-                "test".to_string()
-            ))
+            Ok(VerificationResponse::new(200, "test".to_string()))
         }
 
-        fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
+        fn parse_response(
+            &self,
+            response: VerificationResponse,
+        ) -> Result<Verification, VerificationError> {
             let data = json!({
                 "key": "value"
             });
 
             if response.status() == 200 && response.body() == "test" {
-                Ok(Verification::new(
-                    VerificationStatus::Verified,
-                    data
-                ))
-            } else { panic!("Unexpected response") }
+                Ok(Verification::new(VerificationStatus::Verified, data))
+            } else {
+                panic!("Unexpected response")
+            }
         }
     }
 
@@ -128,30 +135,32 @@ mod tests {
         let verifier = TestVerifier;
         let verification = verifier.verify(&tax_id).unwrap();
         assert_eq!(verification.status(), &VerificationStatus::Verified);
-        assert_eq!(verification.performed_at.date_naive(), Local::now().date_naive());
+        assert_eq!(
+            verification.performed_at.date_naive(),
+            Local::now().date_naive()
+        );
         assert_eq!(verification.data().get("key").unwrap(), "value");
     }
 
-
-    #[cfg(feature="eu_vat")]
+    #[cfg(feature = "eu_vat")]
     #[test]
     fn test_verify_for_eu() {
         test_verify_for("SE123456789101");
     }
 
-    #[cfg(feature="gb_vat")]
+    #[cfg(feature = "gb_vat")]
     #[test]
     fn test_verify_for_gb() {
         test_verify_for("GB123456789");
     }
 
-    #[cfg(feature="ch_vat")]
+    #[cfg(feature = "ch_vat")]
     #[test]
     fn test_verify_for_ch() {
         test_verify_for("CHE123456789");
     }
 
-    #[cfg(feature="no_vat")]
+    #[cfg(feature = "no_vat")]
     #[test]
     fn test_verify_for_no() {
         test_verify_for("NO123456789");

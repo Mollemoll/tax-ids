@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
-use std::collections::HashMap;
 use regex::Regex;
+use std::collections::HashMap;
 
 lazy_static! {
     #[derive(Debug)]

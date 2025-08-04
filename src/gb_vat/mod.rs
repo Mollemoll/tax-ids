@@ -1,10 +1,10 @@
 mod hmrc;
 
-use std::collections::HashMap;
+use crate::verification::Verifier;
+use crate::TaxIdType;
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::TaxIdType;
-use crate::verification::Verifier;
+use std::collections::HashMap;
 
 lazy_static! {
     #[derive(Debug)]
@@ -48,18 +48,13 @@ mod tests {
     #[cfg(feature = "gb_vat")]
     #[test]
     fn test_gb_vat() {
-        let valid_vat_numbers = vec![
-            "GB123456789",
-            "GB123456789101",
-            "GBHA123",
-            "GBGD123"
-        ];
+        let valid_vat_numbers = vec!["GB123456789", "GB123456789101", "GBHA123", "GBGD123"];
         let invalid_vat_numbers = vec![
             "GB12345678",
             "GB1234567891011",
             "GBHA1234",
             "GBGD1234",
-            "SE123456789101"
+            "SE123456789101",
         ];
 
         for valid in valid_vat_numbers {
@@ -69,6 +64,5 @@ mod tests {
         for invalid in invalid_vat_numbers {
             assert!(GbVat::validate_syntax(&GbVat, invalid).is_err());
         }
-
     }
 }

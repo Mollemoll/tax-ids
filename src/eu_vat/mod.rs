@@ -1,12 +1,12 @@
 mod syntax;
 mod vies;
 
-use std::collections::HashMap;
+use crate::verification::Verifier;
+use crate::TaxIdType;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::collections::HashMap;
 use syntax::EU_VAT_PATTERNS;
-use crate::TaxIdType;
-use crate::verification::{Verifier};
 
 #[derive(Debug)]
 pub struct EuVat;
@@ -45,8 +45,8 @@ impl TaxIdType for EuVat {
 
 #[cfg(test)]
 mod tests {
-    use crate::errors::ValidationError;
     use super::*;
+    use crate::errors::ValidationError;
 
     fn assert_validations(valid_vat_numbers: Vec<&str>, invalid_vat_numbers: Vec<&str>) {
         for vat_number in valid_vat_numbers {

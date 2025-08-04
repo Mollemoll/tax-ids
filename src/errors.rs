@@ -40,4 +40,3 @@ impl Debug for VerificationError {
         Ok(())
     }
 }
-
