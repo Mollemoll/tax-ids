@@ -1,20 +1,21 @@
-use std::collections::HashMap;
 use lazy_static::lazy_static;
+use std::collections::HashMap;
 
-use roxmltree;
 use serde_json::json;
 
 use crate::errors::VerificationError;
+use crate::verification::UnavailableReason::*;
+use crate::verification::{
+    UnavailableReason, Verification, VerificationResponse, VerificationStatus, Verifier,
+};
 use crate::TaxId;
-use crate::verification::{Verification, VerificationResponse, VerificationStatus, UnavailableReason, Verifier};
-use crate::verification::UnavailableReason::{*};
 
 // INFO(2024-05-08 mollemoll):
 // Data from Vies
 // https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 
-static URI: &'static str = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
-static ENVELOPE: &'static str = "
+static URI: &str = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
+static ENVELOPE: &str = "
 <soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v1=\"http://schemas.conversesolutions.com/xsd/dmticta/v1\">
     <soapenv:Header/>
     <soapenv:Body>
@@ -96,58 +97,51 @@ impl Verifier for Vies {
             .send()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(
-            VerificationResponse::new(
-                res.status().as_u16(),
-                res.text().map_err(VerificationError::HttpError)?
-            )
-        )
+        Ok(VerificationResponse::new(
+            res.status().as_u16(),
+            res.text().map_err(VerificationError::HttpError)?,
+        ))
     }
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
+    fn parse_response(
+        &self,
+        response: VerificationResponse,
+    ) -> Result<Verification, VerificationError> {
+        let doc = roxmltree::Document::parse(response.body())
+            .map_err(VerificationError::XmlParsingError)?;
         let hash = Vies::xml_to_hash(&doc);
-        let fault_string = hash.get("faultstring")
-            .and_then(|x| x.as_deref());
+        let fault_string = hash.get("faultstring").and_then(|x| x.as_deref());
 
         let verification_status = match fault_string {
-            Some(fault) => {
-                match FAULT_MAP.get(fault){
-                    Some(reason) => VerificationStatus::Unavailable(*reason),
-                    None => {
-                        return Err(VerificationError::UnexpectedResponse(
-                            format!("Unknown fault code: {}", fault)
-                        ));
-                    }
+            Some(fault) => match FAULT_MAP.get(fault) {
+                Some(reason) => VerificationStatus::Unavailable(*reason),
+                None => {
+                    return Err(VerificationError::UnexpectedResponse(format!(
+                        "Unknown fault code: {fault}",
+                    )));
                 }
-            }
+            },
             None => {
-                let validity_value = hash.get("valid")
-                    .and_then(|x| x.as_deref());
+                let validity_value = hash.get("valid").and_then(|x| x.as_deref());
 
                 match validity_value {
                     Some("true") => VerificationStatus::Verified,
                     Some("false") => VerificationStatus::Unverified,
-                    None => return Err(
-                        VerificationError::UnexpectedResponse(
-                            "Missing valid field in VIES response".to_string()
-                        )
-                    ),
-                    Some(_) => return Err(
-                        VerificationError::UnexpectedResponse(
-                            "Invalid value for valid field in VIES response".to_string()
-                        )
-                    )
+                    None => {
+                        return Err(VerificationError::UnexpectedResponse(
+                            "Missing valid field in VIES response".to_string(),
+                        ))
+                    }
+                    Some(_) => {
+                        return Err(VerificationError::UnexpectedResponse(
+                            "Invalid value for valid field in VIES response".to_string(),
+                        ))
+                    }
                 }
             }
         };
 
-        Ok(
-            Verification::new(
-                verification_status,
-                json!(hash)
-            )
-        )
+        Ok(Verification::new(verification_status, json!(hash)))
     }
 }
 
@@ -177,8 +171,14 @@ mod tests {
         let hash = Vies::xml_to_hash(&doc);
 
         assert_eq!(hash.get("countryCode"), Some(&Some("SE".to_string())));
-        assert_eq!(hash.get("vatNumber"), Some(&Some("123456789101".to_string())));
-        assert_eq!(hash.get("requestDate"), Some(&Some("2021-01-01+01:00".to_string())));
+        assert_eq!(
+            hash.get("vatNumber"),
+            Some(&Some("123456789101".to_string()))
+        );
+        assert_eq!(
+            hash.get("requestDate"),
+            Some(&Some("2021-01-01+01:00".to_string()))
+        );
         assert_eq!(hash.get("valid"), Some(&Some("true".to_string())));
         assert_eq!(hash.get("name"), Some(&Some("Test Company".to_string())));
         assert_eq!(hash.get("address"), Some(&None));
@@ -253,16 +253,23 @@ mod tests {
                         </env:Fault>
                     </env:Body>
                 </env:Envelope>
-            "#.to_string()
+            "#
+            .to_string(),
         );
         let verifier = Vies;
         let verification = verifier.parse_response(response).unwrap();
 
-        assert_eq!(verification.status(), &VerificationStatus::Unavailable(UnavailableReason::RateLimit));
-        assert_eq!(verification.data(), &json!({
-            "faultcode": "env:Server",
-            "faultstring": MS_MAX_CONCURRENT_REQ
-        }));
+        assert_eq!(
+            verification.status(),
+            &VerificationStatus::Unavailable(UnavailableReason::RateLimit)
+        );
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "faultcode": "env:Server",
+                "faultstring": MS_MAX_CONCURRENT_REQ
+            })
+        );
     }
 
     #[cfg(feature = "eu_vat")]

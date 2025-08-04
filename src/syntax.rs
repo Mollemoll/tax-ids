@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use lazy_static::lazy_static;
 use regex::Regex;
+use std::collections::HashMap;
 
 #[cfg(feature = "ch_vat")]
 use crate::ch_vat::ChVat;

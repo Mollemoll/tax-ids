@@ -1,8 +1,8 @@
 #![doc = include_str!("../README.md")]
 
 mod errors;
-mod verification;
 mod syntax;
+mod verification;
 
 #[cfg(feature = "eu_vat")]
 mod eu_vat;
@@ -21,23 +21,27 @@ mod no_vat;
 #[cfg(feature = "no_vat")]
 use no_vat::NoVat;
 
+pub use errors::{ValidationError, VerificationError};
+use regex::Regex;
 use std::collections::HashMap;
 use std::fmt;
-use regex::Regex;
 use syntax::SYNTAX;
-use verification::{Verifier};
-pub use verification::{Verification, VerificationStatus, UnavailableReason};
-pub use errors::{ValidationError, VerificationError};
-
+use verification::Verifier;
+pub use verification::{UnavailableReason, Verification, VerificationStatus};
 
 trait TaxIdType {
     fn name(&self) -> &'static str;
+
     fn syntax_map(&self) -> &HashMap<String, Regex>;
+
     fn validate_syntax(&self, value: &str) -> Result<(), ValidationError> {
         let tax_country_code = &value[0..2];
-        let pattern = self.syntax_map()
-            .get(tax_country_code)
-            .ok_or(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()));
+        let pattern =
+            self.syntax_map()
+                .get(tax_country_code)
+                .ok_or(ValidationError::UnsupportedCountryCode(
+                    tax_country_code.to_string(),
+                ));
 
         if pattern?.is_match(value) {
             Ok(())
@@ -45,7 +49,9 @@ trait TaxIdType {
             Err(ValidationError::InvalidSyntax)
         }
     }
+
     fn country_code_from_tax_country(&self, tax_country_code: &str) -> String;
+
     fn verifier(&self) -> Box<dyn Verifier>;
 }
 
@@ -69,8 +75,11 @@ impl TaxId {
     /// its country-specific regex pattern without creating any TaxId.
     pub fn validate_syntax(value: &str) -> Result<(), ValidationError> {
         let tax_country_code = &value[0..2];
-        SYNTAX.get(tax_country_code)
-            .ok_or(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()))
+        SYNTAX
+            .get(tax_country_code)
+            .ok_or(ValidationError::UnsupportedCountryCode(
+                tax_country_code.to_string(),
+            ))
             .and_then(|syntax| {
                 if syntax.is_match(value) {
                     Ok(())
@@ -96,7 +105,11 @@ impl TaxId {
             "NO" => Box::new(NoVat),
             #[cfg(feature = "eu_vat")]
             _ if eu_vat::COUNTRIES.contains(&tax_country_code) => Box::new(EuVat),
-            _ => return Err(ValidationError::UnsupportedCountryCode(tax_country_code.to_string()))
+            _ => {
+                return Err(ValidationError::UnsupportedCountryCode(
+                    tax_country_code.to_string(),
+                ))
+            }
         };
 
         id_type.validate_syntax(value)?;
@@ -116,9 +129,15 @@ impl TaxId {
     }
 
     /// Returns the full tax id value. IE: SE556703748501
-    pub fn value(&self) -> &str { &self.value }
+    pub fn value(&self) -> &str {
+        &self.value
+    }
+
     /// Returns the country code. IE: SE
-    pub fn country_code(&self) -> &str { &self.country_code }
+    pub fn country_code(&self) -> &str {
+        &self.country_code
+    }
+
     /// Returns the tax country code. IE: SE
     ///
     /// This is the same as the country code for most countries, but not for XI and EL.
@@ -127,13 +146,23 @@ impl TaxId {
     /// while trading with the EU. A consequence of Brexit.
     ///
     /// EL is the tax country code for Greece.
-    pub fn tax_country_code(&self) -> &str { &self.tax_country_code }
+    pub fn tax_country_code(&self) -> &str {
+        &self.tax_country_code
+    }
+
     /// Returns the local value of the tax id. IE: 556703748501
-    pub fn local_value(&self) -> &str { &self.local_value }
+    pub fn local_value(&self) -> &str {
+        &self.local_value
+    }
 
     /// Returns the type of tax id in snake_case. IE: eu_vat, gb_vat, ch_va or no_vat
-    pub fn tax_id_type(&self) -> &str { self.id_type.name() }
-    fn id_type(&self) -> &Box<dyn TaxIdType> { &self.id_type }
+    pub fn tax_id_type(&self) -> &str {
+        self.id_type.name()
+    }
+
+    fn id_type(&self) -> &dyn TaxIdType {
+        self.id_type.as_ref()
+    }
 }
 
 #[cfg(test)]
@@ -158,12 +187,7 @@ mod tests {
 
         for vat_number in valid_vat_numbers {
             let valid_syntax = TaxId::validate_syntax(vat_number);
-            assert_eq!(
-                valid_syntax,
-                Ok(()),
-                "Expected {} to be valid",
-                vat_number
-            );
+            assert_eq!(valid_syntax, Ok(()), "Expected {} to be valid", vat_number);
         }
     }
 
@@ -171,16 +195,21 @@ mod tests {
     fn test_validate_syntax_unsupported_country() {
         let validation = TaxId::validate_syntax("XX123456789");
         assert!(validation.is_err());
-        assert_eq!(validation.unwrap_err(), ValidationError::UnsupportedCountryCode("XX".to_string()));
+        assert_eq!(
+            validation.unwrap_err(),
+            ValidationError::UnsupportedCountryCode("XX".to_string())
+        );
     }
 
     #[test]
     fn test_new_unsupported_country() {
         let tax_id = TaxId::new("XX123456789");
         assert!(tax_id.is_err());
-        assert_eq!(tax_id.unwrap_err(), ValidationError::UnsupportedCountryCode("XX".to_string()));
+        assert_eq!(
+            tax_id.unwrap_err(),
+            ValidationError::UnsupportedCountryCode("XX".to_string())
+        );
     }
-
 
     #[cfg(feature = "eu_vat")]
     #[test]
@@ -249,7 +278,7 @@ mod tests {
     #[cfg(feature = "eu_vat")]
     #[test]
     fn test_new_eu_vat() {
-        let tax_id= TaxId::new("SE123456789101").unwrap();
+        let tax_id = TaxId::new("SE123456789101").unwrap();
         assert_eq!(tax_id.value(), "SE123456789101");
         assert_eq!(tax_id.country_code(), "SE");
         assert_eq!(tax_id.local_value(), "123456789101");
@@ -306,4 +335,3 @@ mod tests {
         assert_eq!(tax_id.tax_id_type(), "no_vat");
     }
 }
-

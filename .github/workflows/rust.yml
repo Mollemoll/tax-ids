@@ -2,16 +2,15 @@ name: Rust
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -20,7 +19,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Format check
+        run: cargo fmt --all --check
+
+      - name: Check
+        run: cargo check --verbose --no-default-features --features ${{ matrix.feature }}
+
+      - name: Clippy
+        run: cargo clippy --verbose --no-default-features --features ${{ matrix.feature }}
+
       - name: Build
         run: cargo build --verbose --no-default-features --features ${{ matrix.feature }}
+
       - name: Run tests
         run: cargo test --verbose --no-default-features --features ${{ matrix.feature }}

@@ -1,11 +1,11 @@
 mod brreg;
 mod translator;
 
-use std::collections::HashMap;
+use crate::verification::Verifier;
+use crate::{TaxId, TaxIdType};
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::{TaxId, TaxIdType};
-use crate::verification::Verifier;
+use std::collections::HashMap;
 
 lazy_static! {
     #[derive(Debug)]
@@ -29,6 +29,7 @@ impl TaxIdType for NoVat {
     fn name(&self) -> &'static str {
         "no_vat"
     }
+
     fn syntax_map(&self) -> &HashMap<String, Regex> {
         &NO_VAT_PATTERN
     }
@@ -57,10 +58,7 @@ mod tests {
     #[cfg(feature = "no_vat")]
     #[test]
     fn test_no_vats() {
-        let valid_vat_numbers = vec![
-            "NO123456789MVA",
-            "NO123456789",
-        ];
+        let valid_vat_numbers = vec!["NO123456789MVA", "NO123456789"];
         let invalid_vat_numbers = vec![
             "NO123456789 MVA",
             "NO12345678MVA",

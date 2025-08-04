@@ -1,11 +1,13 @@
-use std::collections::HashMap;
+use crate::errors::VerificationError;
+use crate::verification::{
+    UnavailableReason::*, Verification, VerificationResponse, VerificationStatus::*, Verifier,
+};
+use crate::TaxId;
 use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
 use roxmltree;
 use serde_json::json;
-use crate::verification::{Verifier, Verification, VerificationStatus::{*}, VerificationResponse, UnavailableReason::{*}};
-use crate::errors::VerificationError;
-use crate::TaxId;
+use std::collections::HashMap;
 
 // INFO(2024-05-07 mollemoll):
 // https://www.bfs.admin.ch/bfs/en/home/registers/enterprise-register/enterprise-identification/uid-register/uid-interfaces.html#-125185306
@@ -76,8 +78,7 @@ impl Bfs {
 impl Verifier for Bfs {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
-        let body = ENVELOPE
-            .replace("{value}", tax_id.value());
+        let body = ENVELOPE.replace("{value}", tax_id.value());
         let res = client
             .post(URI)
             .headers(HEADERS.clone())
@@ -85,36 +86,44 @@ impl Verifier for Bfs {
             .send()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(
-            VerificationResponse::new(
-                res.status().as_u16(),
-                res.text().map_err(VerificationError::HttpError)?
-            )
-        )
+        Ok(VerificationResponse::new(
+            res.status().as_u16(),
+            res.text().map_err(VerificationError::HttpError)?,
+        ))
     }
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
-        let doc = roxmltree::Document::parse(response.body()).map_err(VerificationError::XmlParsingError)?;
+    fn parse_response(
+        &self,
+        response: VerificationResponse,
+    ) -> Result<Verification, VerificationError> {
+        let doc = roxmltree::Document::parse(response.body())
+            .map_err(VerificationError::XmlParsingError)?;
         let hash = Bfs::xml_to_hash(&doc);
-        let fault_string = hash.get("faultstring")
-            .and_then(|x| x.as_deref());
+        let fault_string = hash.get("faultstring").and_then(|x| x.as_deref());
 
         let status = match fault_string {
             Some(DATA_VALIDATION_FAILED) => Unverified,
             Some(REQUEST_LIMIT_EXCEEDED) => Unavailable(RateLimit),
-            Some(_) => return Err(VerificationError::UnexpectedResponse(
-                format!("Unexpected faultstring: {}", fault_string.unwrap().to_string())
-            )),
+            Some(_) => {
+                return Err(VerificationError::UnexpectedResponse(format!(
+                    "Unexpected faultstring: {}",
+                    fault_string.unwrap().to_string()
+                )))
+            }
             None => {
-                let result = hash.get("ValidateVatNumberResult").and_then(|x| x.as_deref());
+                let result = hash
+                    .get("ValidateVatNumberResult")
+                    .and_then(|x| x.as_deref());
                 match result {
                     Some("true") => Verified,
                     Some("false") => Unverified,
-                    None | Some(_) => return Err(VerificationError::UnexpectedResponse(
-                        "ValidateVatNumberResult should be 'true' or 'false'".to_string()
-                    )),
+                    None | Some(_) => {
+                        return Err(VerificationError::UnexpectedResponse(
+                            "ValidateVatNumberResult should be 'true' or 'false'".to_string(),
+                        ))
+                    }
                 }
-            },
+            }
         };
 
         Ok(Verification::new(status, json!(hash)))
@@ -140,7 +149,10 @@ mod tests {
         let doc = roxmltree::Document::parse(xml).unwrap();
         let hash = Bfs::xml_to_hash(&doc);
 
-        assert_eq!(hash.get("ValidateVatNumberResult"), Some(&Some("true".to_string())));
+        assert_eq!(
+            hash.get("ValidateVatNumberResult"),
+            Some(&Some("true".to_string()))
+        );
     }
 
     #[cfg(feature = "ch_vat")]
@@ -163,9 +175,12 @@ mod tests {
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &Verified);
-        assert_eq!(verification.data(), &json!({
-            "ValidateVatNumberResult": "true"
-        }));
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "ValidateVatNumberResult": "true"
+            })
+        );
     }
 
     #[cfg(feature = "ch_vat")]
@@ -188,9 +203,12 @@ mod tests {
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &Unverified);
-        assert_eq!(verification.data(), &json!({
-            "ValidateVatNumberResult": "false"
-        }));
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "ValidateVatNumberResult": "false"
+            })
+        );
     }
 
     #[cfg(feature = "ch_vat")]
@@ -221,13 +239,16 @@ mod tests {
         let verification = verifier.parse_response(response).unwrap();
 
         assert_eq!(verification.status(), &Unavailable(RateLimit));
-        assert_eq!(verification.data(), &json!({
-            "error": REQUEST_LIMIT_EXCEEDED,
-            "errorDetail": "Maximum number of 20 requests per 1 minute(s) exceeded",
-            "operation": "ValidateVatNumber",
-            "faultcode": "s:Client",
-            "faultstring": REQUEST_LIMIT_EXCEEDED
-        }));
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "error": REQUEST_LIMIT_EXCEEDED,
+                "errorDetail": "Maximum number of 20 requests per 1 minute(s) exceeded",
+                "operation": "ValidateVatNumber",
+                "faultcode": "s:Client",
+                "faultstring": REQUEST_LIMIT_EXCEEDED
+            })
+        );
     }
 
     #[cfg(feature = "ch_vat")]
@@ -244,7 +265,8 @@ mod tests {
                         </s:Fault>
                     </s:Body>
                 </s:Envelope>
-            "#.to_string()
+            "#
+            .to_string(),
         );
 
         let verifier = Bfs;

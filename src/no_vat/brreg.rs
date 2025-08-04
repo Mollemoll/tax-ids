@@ -1,14 +1,14 @@
-use std::collections::HashMap;
+use crate::errors::VerificationError;
+use crate::no_vat::translator::translate_keys;
+use crate::no_vat::NoVat;
+use crate::verification::UnavailableReason::ServiceUnavailable;
+use crate::verification::VerificationStatus::*;
+use crate::verification::{Verification, VerificationResponse, VerificationStatus, Verifier};
+use crate::TaxId;
 use lazy_static::lazy_static;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT};
 use serde_json::{json, Value};
-use crate::verification::{Verifier, Verification, VerificationStatus, VerificationResponse};
-use crate::verification::VerificationStatus::{*};
-use crate::errors::VerificationError;
-use crate::no_vat::NoVat;
-use crate::no_vat::translator::translate_keys;
-use crate::TaxId;
-use crate::verification::UnavailableReason::{ServiceUnavailable};
+use std::collections::HashMap;
 
 // INFO(2024-05-08 mollemoll):
 // Data from Brønnøysund Register Centre
@@ -62,26 +62,27 @@ impl Verifier for BrReg {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
         let client = reqwest::blocking::Client::new();
         let res = client
-            .get(format!("{}/{}", BASE_URI, NoVat::extract_org_number(&NoVat, tax_id)))
+            .get(format!(
+                "{}/{}",
+                BASE_URI,
+                NoVat::extract_org_number(&NoVat, tax_id)
+            ))
             .headers(HEADERS.clone())
             .send()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(
-            VerificationResponse::new(
-                res.status().as_u16(),
-                res.text().map_err(VerificationError::HttpError)?
-            )
-        )
+        Ok(VerificationResponse::new(
+            res.status().as_u16(),
+            res.text().map_err(VerificationError::HttpError)?,
+        ))
     }
 
-    fn parse_response(&self, response: VerificationResponse) -> Result<Verification, VerificationError> {
+    fn parse_response(
+        &self,
+        response: VerificationResponse,
+    ) -> Result<Verification, VerificationError> {
         match response.status() {
-            404 | 410 => return Ok(
-                Verification::new(
-                    Unverified, json!({})
-                )
-            ),
+            404 | 410 => return Ok(Verification::new(Unverified, json!({}))),
             200 | 500 => {
                 let mut v: Value = serde_json::from_str(response.body())
                     .map_err(VerificationError::JsonParsingError)?;
@@ -89,21 +90,14 @@ impl Verifier for BrReg {
                 let hash = v.as_object().unwrap();
 
                 if response.status() == 500 {
-                    return Ok(
-                        Verification::new(
-                            Unavailable(ServiceUnavailable),
-                            json!(hash)
-                        )
-                    );
+                    return Ok(Verification::new(
+                        Unavailable(ServiceUnavailable),
+                        json!(hash),
+                    ));
                 }
 
-                Ok(
-                    Verification::new(
-                        self.qualify(hash),
-                        json!(hash)
-                    )
-                )
-            },
+                Ok(Verification::new(self.qualify(hash), json!(hash)))
+            }
             _ => return Err(VerificationError::UnexpectedStatusCode(response.status())),
         }
     }
@@ -136,43 +130,46 @@ mod tests {
                     "kommune": "OSLO",
                     "kommunenummer": "0301"
                 }
-            }"#.to_string()
+            }"#
+            .to_string(),
         );
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Verified);
-        assert_eq!(verification.data(), &json!({
-            "organizationNumber": "123456789",
-            "name": "Test Company AS",
-            "registeredInVatRegister": true,
-            "bankruptcy": false,
-            "underLiquidation": false,
-            "underForcedLiquidation": false,
-            "businessAddress": {
-                "country": "Norge",
-                "countryCode": "NO",
-                "postalCode": "0151",
-                "city": "OSLO",
-                "street": [
-                    "Grev Wedels plass 9"
-                ],
-                "municipality": "OSLO",
-                "municipalityCode": "0301"
-            },
-        }));
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "organizationNumber": "123456789",
+                "name": "Test Company AS",
+                "registeredInVatRegister": true,
+                "bankruptcy": false,
+                "underLiquidation": false,
+                "underForcedLiquidation": false,
+                "businessAddress": {
+                    "country": "Norge",
+                    "countryCode": "NO",
+                    "postalCode": "0151",
+                    "city": "OSLO",
+                    "street": [
+                        "Grev Wedels plass 9"
+                    ],
+                    "municipality": "OSLO",
+                    "municipalityCode": "0301"
+                },
+            })
+        );
     }
 
     #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unverified_due_to_not_found() {
-        let response = VerificationResponse::new(
-            404,
-            r#"{}"#.to_string()
-        );
+        let response = VerificationResponse::new(404, r#"{}"#.to_string());
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({}));
     }
@@ -189,20 +186,25 @@ mod tests {
                 "konkurs": false,
                 "underAvvikling": false,
                 "underTvangsavviklingEllerTvangsopplosning": false
-            }"#.to_string()
+            }"#
+            .to_string(),
         );
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unverified);
-        assert_eq!(verification.data(), &json!({
-            "organizationNumber": "123456789",
-            "name": "Test Company AS",
-            "registeredInVatRegister": false,
-            "bankruptcy": false,
-            "underLiquidation": false,
-            "underForcedLiquidation": false
-        }));
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "organizationNumber": "123456789",
+                "name": "Test Company AS",
+                "registeredInVatRegister": false,
+                "bankruptcy": false,
+                "underLiquidation": false,
+                "underForcedLiquidation": false
+            })
+        );
     }
 
     #[cfg(feature = "no_vat")]
@@ -218,11 +220,13 @@ mod tests {
                         "self": {}
                     }
                 }
-            "#.to_string()
+            "#
+            .to_string(),
         );
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({}));
     }
@@ -241,32 +245,35 @@ mod tests {
                     "path": "/enhetsregisteret/api/enheter",
                     "trace": "b94669c0-425a-4b6c-ab30-504de8d9c127"
                 }
-            "#.to_string()
+            "#
+            .to_string(),
         );
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unavailable(ServiceUnavailable));
-        assert_eq!(verification.data(), &json!({
-            "timestamp": "2024-01-05T07:36:21.523+0000",
-            "status": 500,
-            "error": "Internal Server Error",
-            "message": "Internal Server Error",
-            "path": "/enhetsregisteret/api/enheter",
-            "trace": "b94669c0-425a-4b6c-ab30-504de8d9c127"
-        }));
+        assert_eq!(
+            verification.data(),
+            &json!({
+                "timestamp": "2024-01-05T07:36:21.523+0000",
+                "status": 500,
+                "error": "Internal Server Error",
+                "message": "Internal Server Error",
+                "path": "/enhetsregisteret/api/enheter",
+                "trace": "b94669c0-425a-4b6c-ab30-504de8d9c127"
+            })
+        );
     }
 
     #[cfg(feature = "no_vat")]
     #[test]
     fn test_parse_response_unexpected_status_code() {
-        let response = VerificationResponse::new(
-            204,
-            "".to_string()
-        );
+        let response = VerificationResponse::new(204, "".to_string());
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response);
+
         assert_eq!(verification.is_err(), true);
         match verification {
             Err(VerificationError::UnexpectedStatusCode(code)) => {

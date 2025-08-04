@@ -1,10 +1,10 @@
 mod bfs;
 
-use std::collections::HashMap;
+use crate::verification::Verifier;
+use crate::TaxIdType;
 use lazy_static::lazy_static;
 use regex::Regex;
-use crate::TaxIdType;
-use crate::verification::Verifier;
+use std::collections::HashMap;
 
 lazy_static! {
     #[derive(Debug)]
@@ -58,7 +58,7 @@ mod tests {
             "CHE-778.887.921",
             "CHE-778.887.921 IVA",
             "CHE778887921",
-            "CHE778887921 IVA"
+            "CHE778887921 IVA",
         ];
         let invalid_vat_numbers = vec![
             "CHE-778.887.921MWST",
@@ -84,7 +84,7 @@ mod tests {
             "CHE-778.887.9211 IVA",
             "CHE-34.887.921",
             "CHE-34.887.921IVA",
-            "CHE-34.887.921 IVA"
+            "CHE-34.887.921 IVA",
         ];
 
         for valid in valid_vat_numbers {
