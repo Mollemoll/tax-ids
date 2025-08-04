@@ -29,6 +29,7 @@ impl TaxIdType for NoVat {
     fn name(&self) -> &'static str {
         "no_vat"
     }
+
     fn syntax_map(&self) -> &HashMap<String, Regex> {
         &NO_VAT_PATTERN
     }

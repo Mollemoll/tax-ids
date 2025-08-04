@@ -136,6 +136,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Verified);
         assert_eq!(
             verification.data(),
@@ -168,6 +169,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({}));
     }
@@ -190,6 +192,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unverified);
         assert_eq!(
             verification.data(),
@@ -223,6 +226,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unverified);
         assert_eq!(verification.data(), &json!({}));
     }
@@ -247,6 +251,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response).unwrap();
+
         assert_eq!(verification.status(), &Unavailable(ServiceUnavailable));
         assert_eq!(
             verification.data(),
@@ -268,6 +273,7 @@ mod tests {
 
         let verifier = BrReg;
         let verification = verifier.parse_response(response);
+
         assert_eq!(verification.is_err(), true);
         match verification {
             Err(VerificationError::UnexpectedStatusCode(code)) => {

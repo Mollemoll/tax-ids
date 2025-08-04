@@ -31,7 +31,9 @@ pub use verification::{UnavailableReason, Verification, VerificationStatus};
 
 trait TaxIdType {
     fn name(&self) -> &'static str;
+
     fn syntax_map(&self) -> &HashMap<String, Regex>;
+
     fn validate_syntax(&self, value: &str) -> Result<(), ValidationError> {
         let tax_country_code = &value[0..2];
         let pattern =
@@ -47,7 +49,9 @@ trait TaxIdType {
             Err(ValidationError::InvalidSyntax)
         }
     }
+
     fn country_code_from_tax_country(&self, tax_country_code: &str) -> String;
+
     fn verifier(&self) -> Box<dyn Verifier>;
 }
 
@@ -128,10 +132,12 @@ impl TaxId {
     pub fn value(&self) -> &str {
         &self.value
     }
+
     /// Returns the country code. IE: SE
     pub fn country_code(&self) -> &str {
         &self.country_code
     }
+
     /// Returns the tax country code. IE: SE
     ///
     /// This is the same as the country code for most countries, but not for XI and EL.
@@ -143,6 +149,7 @@ impl TaxId {
     pub fn tax_country_code(&self) -> &str {
         &self.tax_country_code
     }
+
     /// Returns the local value of the tax id. IE: 556703748501
     pub fn local_value(&self) -> &str {
         &self.local_value

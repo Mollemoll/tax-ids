@@ -68,6 +68,7 @@ impl Verification {
     pub fn status(&self) -> &VerificationStatus {
         &self.status
     }
+
     /// Additional data selected by the crate owner from the government database response.
     /// This data can be used to provide more context about the verification.
     /// The data is in JSON format.
@@ -86,6 +87,7 @@ pub trait Verifier {
         let verification = self.parse_response(response)?;
         Ok(verification)
     }
+
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError>;
 
     fn parse_response(
@@ -136,6 +138,7 @@ mod tests {
         let tax_id = TaxId::new(value).unwrap();
         let verifier = TestVerifier;
         let verification = verifier.verify(&tax_id).unwrap();
+
         assert_eq!(verification.status(), &VerificationStatus::Verified);
         assert_eq!(
             verification.performed_at.date_naive(),
