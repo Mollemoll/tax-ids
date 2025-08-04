@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-use roxmltree;
 use serde_json::json;
 
 use crate::errors::VerificationError;
@@ -15,8 +14,8 @@ use crate::TaxId;
 // Data from Vies
 // https://ec.europa.eu/taxation_customs/vies/checkVatService.wsdl
 
-static URI: &'static str = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
-static ENVELOPE: &'static str = "
+static URI: &str = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService";
+static ENVELOPE: &str = "
 <soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v1=\"http://schemas.conversesolutions.com/xsd/dmticta/v1\">
     <soapenv:Header/>
     <soapenv:Body>
@@ -118,8 +117,7 @@ impl Verifier for Vies {
                 Some(reason) => VerificationStatus::Unavailable(*reason),
                 None => {
                     return Err(VerificationError::UnexpectedResponse(format!(
-                        "Unknown fault code: {}",
-                        fault
+                        "Unknown fault code: {fault}",
                     )));
                 }
             },

@@ -13,9 +13,11 @@ impl VerificationResponse {
         VerificationResponse { status, body }
     }
 
+    #[allow(dead_code)]
     pub fn status(&self) -> u16 {
         self.status
     }
+
     pub fn body(&self) -> &str {
         &self.body
     }
@@ -62,7 +64,7 @@ impl Verification {
     /// - Enable/process the transaction upon `VerificationStatus::Verified`.
     /// - Block transaction/provide a validation msg upon `VerificationStatus::Unverified`.
     /// - Enable/process the transaction upon `VerificationStatus::Unavailable` but perform a
-    ///     re-verification at a later stage.
+    ///   re-verification at a later stage.
     pub fn status(&self) -> &VerificationStatus {
         &self.status
     }

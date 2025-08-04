@@ -152,8 +152,9 @@ impl TaxId {
     pub fn tax_id_type(&self) -> &str {
         self.id_type.name()
     }
-    fn id_type(&self) -> &Box<dyn TaxIdType> {
-        &self.id_type
+
+    fn id_type(&self) -> &dyn TaxIdType {
+        self.id_type.as_ref()
     }
 }
 
