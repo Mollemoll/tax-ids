@@ -86,21 +86,21 @@ impl Vies {
 
 impl Verifier for Vies {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
-        let client = reqwest::blocking::Client::new();
-        let body = ENVELOPE
+        let req_body = ENVELOPE
             .replace("{country}", tax_id.tax_country_code())
             .replace("{number}", tax_id.local_value());
-        let res = client
-            .post(URI)
+
+        let mut res = ureq::post(URI)
             .header("Content-Type", "text/xml")
-            .body(body)
-            .send()
+            .send(req_body)
             .map_err(VerificationError::HttpError)?;
 
-        Ok(VerificationResponse::new(
-            res.status().as_u16(),
-            res.text().map_err(VerificationError::HttpError)?,
-        ))
+        let body = res
+            .body_mut()
+            .read_to_string()
+            .map_err(VerificationError::HttpError)?;
+
+        Ok(VerificationResponse::new(res.status().as_u16(), body))
     }
 
     fn parse_response(
