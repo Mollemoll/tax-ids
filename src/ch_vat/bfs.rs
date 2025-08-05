@@ -3,11 +3,10 @@ use crate::verification::{
     UnavailableReason::*, Verification, VerificationResponse, VerificationStatus::*, Verifier,
 };
 use crate::TaxId;
-use lazy_static::lazy_static;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, CONTENT_TYPE};
 use roxmltree;
 use serde_json::json;
 use std::collections::HashMap;
+use ureq::http::header::{ACCEPT, CONTENT_TYPE};
 
 // INFO(2024-05-07 mollemoll):
 // https://www.bfs.admin.ch/bfs/en/home/registers/enterprise-register/enterprise-identification/uid-register/uid-interfaces.html#-125185306
@@ -30,20 +29,6 @@ static ENVELOPE: &'static str = "
 
 const DATA_VALIDATION_FAILED: &str = "Data_validation_failed";
 const REQUEST_LIMIT_EXCEEDED: &str = "Request_limit_exceeded";
-
-lazy_static! {
-    #[derive(Debug)]
-    pub static ref HEADERS: HeaderMap = {
-        let mut headers = HeaderMap::new();
-        headers.insert(ACCEPT, HeaderValue::from_static("text/xml;charset=UTF-8"));
-        headers.insert(CONTENT_TYPE, HeaderValue::from_static("text/xml;charset=UTF-8"));
-        headers.insert(
-            HeaderName::from_static("soapaction"),
-            HeaderValue::from_static("http://www.uid.admin.ch/xmlns/uid-wse/IPublicServices/ValidateVatNumber")
-        );
-        headers
-    };
-}
 
 #[derive(Debug)]
 pub struct Bfs;
@@ -77,19 +62,24 @@ impl Bfs {
 
 impl Verifier for Bfs {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
-        let client = reqwest::blocking::Client::new();
-        let body = ENVELOPE.replace("{value}", tax_id.value());
-        let res = client
-            .post(URI)
-            .headers(HEADERS.clone())
-            .body(body)
-            .send()
+        let req_body = ENVELOPE.replace("{value}", tax_id.value());
+
+        let mut res = ureq::post(URI)
+            .header(ACCEPT, "text/xml;charset=UTF-8")
+            .header(CONTENT_TYPE, "text/xml;charset=UTF-8")
+            .header(
+                "soapaction",
+                "http://www.uid.admin.ch/xmlns/uid-wse/IPublicServices/ValidateVatNumber",
+            )
+            .send(req_body)
             .map_err(VerificationError::HttpError)?;
 
-        Ok(VerificationResponse::new(
-            res.status().as_u16(),
-            res.text().map_err(VerificationError::HttpError)?,
-        ))
+        let res_body = res
+            .body_mut()
+            .read_to_string()
+            .map_err(VerificationError::HttpError)?;
+
+        Ok(VerificationResponse::new(res.status().as_u16(), res_body))
     }
 
     fn parse_response(

@@ -6,9 +6,9 @@ use crate::verification::VerificationStatus::*;
 use crate::verification::{Verification, VerificationResponse, VerificationStatus, Verifier};
 use crate::TaxId;
 use lazy_static::lazy_static;
-use reqwest::header::{HeaderMap, HeaderValue, ACCEPT};
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use ureq::http::header::ACCEPT;
 
 // INFO(2024-05-08 mollemoll):
 // Data from Brønnøysund Register Centre
@@ -18,13 +18,6 @@ use std::collections::HashMap;
 static BASE_URI: &'static str = "https://data.brreg.no/enhetsregisteret/api/enheter";
 
 lazy_static! {
-    #[derive(Debug)]
-    pub static ref HEADERS: HeaderMap = {
-        let mut headers = HeaderMap::new();
-        headers.insert(ACCEPT, HeaderValue::from_static("application/vnd.brreg.enhetsregisteret.enhet.v2+json"));
-        headers
-    };
-
     #[derive(Debug)]
     pub static ref REQUIREMENTS_TO_BE_VALID : HashMap<&'static str, bool> = {
         let mut map = HashMap::new();
@@ -60,21 +53,24 @@ impl BrReg {
 
 impl Verifier for BrReg {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
-        let client = reqwest::blocking::Client::new();
-        let res = client
-            .get(format!(
-                "{}/{}",
-                BASE_URI,
-                NoVat::extract_org_number(&NoVat, tax_id)
-            ))
-            .headers(HEADERS.clone())
-            .send()
+        let mut res = ureq::get(format!(
+            "{}/{}",
+            BASE_URI,
+            NoVat::extract_org_number(&NoVat, tax_id)
+        ))
+        .header(
+            ACCEPT,
+            "application/vnd.brreg.enhetsregisteret.enhet.v2+json",
+        )
+        .call()
+        .map_err(VerificationError::HttpError)?;
+
+        let res_body = res
+            .body_mut()
+            .read_to_string()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(VerificationResponse::new(
-            res.status().as_u16(),
-            res.text().map_err(VerificationError::HttpError)?,
-        ))
+        Ok(VerificationResponse::new(res.status().as_u16(), res_body))
     }
 
     fn parse_response(

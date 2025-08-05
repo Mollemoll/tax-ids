@@ -20,17 +20,17 @@ pub struct Hmrc;
 
 impl Verifier for Hmrc {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
-        let client = reqwest::blocking::Client::new();
-        let res = client
-            .get(format!("{}/{}", BASE_URI, tax_id.local_value()))
+        let mut res = ureq::get(format!("{}/{}", BASE_URI, tax_id.local_value()))
             .header("Accept", "application/vnd.hmrc.1.0+json")
-            .send()
+            .call()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(VerificationResponse::new(
-            res.status().as_u16(),
-            res.text().map_err(VerificationError::HttpError)?,
-        ))
+        let res_body = res
+            .body_mut()
+            .read_to_string()
+            .map_err(VerificationError::HttpError)?;
+
+        Ok(VerificationResponse::new(res.status().as_u16(), res_body))
     }
 
     fn parse_response(
