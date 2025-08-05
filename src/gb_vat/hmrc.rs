@@ -9,8 +9,7 @@ use serde_json::json;
 // https://www.tax.service.gov.uk/check-vat-number/enter-vat-details
 // https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-registered-companies-api/1.0/oas/page
 
-static BASE_URI: &'static str =
-    "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
+static BASE_URI: &str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 const NOT_FOUND: &str = "NOT_FOUND";
 #[allow(dead_code)]
 const SERVER_ERROR: &str = "SERVER_ERROR";

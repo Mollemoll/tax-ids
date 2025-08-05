@@ -3,7 +3,6 @@ use crate::verification::{
     UnavailableReason::*, Verification, VerificationResponse, VerificationStatus::*, Verifier,
 };
 use crate::TaxId;
-use roxmltree;
 use serde_json::json;
 use std::collections::HashMap;
 use ureq::http::header::{ACCEPT, CONTENT_TYPE};
@@ -14,9 +13,9 @@ use ureq::http::header::{ACCEPT, CONTENT_TYPE};
 // Bfs Accepted format: 'CHE123456789' or 'CHE-123.456.789' with optional space and
 // MWST/TVA/IVA extension: 'CHE123456789 MWST' or 'CHE-123.456.789 MWST'
 
-static URI: &'static str = "https://www.uid-wse-a.admin.ch/V5.0/PublicServices.svc";
+static URI: &str = "https://www.uid-wse-a.admin.ch/V5.0/PublicServices.svc";
 
-static ENVELOPE: &'static str = "
+static ENVELOPE: &str = "
     <soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:uid=\"http://www.uid.admin.ch/xmlns/uid-wse\">
         <soapenv:Header/>
         <soapenv:Body>
@@ -97,7 +96,7 @@ impl Verifier for Bfs {
             Some(_) => {
                 return Err(VerificationError::UnexpectedResponse(format!(
                     "Unexpected faultstring: {}",
-                    fault_string.unwrap().to_string()
+                    fault_string.unwrap()
                 )))
             }
             None => {

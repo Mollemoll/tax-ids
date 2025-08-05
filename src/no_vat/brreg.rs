@@ -15,7 +15,7 @@ use ureq::http::header::ACCEPT;
 // https://data.brreg.no/enhetsregisteret/oppslag/enheter
 // https://data.brreg.no/enhetsregisteret/api/dokumentasjon/no/index.html#tag/Enheter/operation/hentEnhet
 
-static BASE_URI: &'static str = "https://data.brreg.no/enhetsregisteret/api/enheter";
+static BASE_URI: &str = "https://data.brreg.no/enhetsregisteret/api/enheter";
 
 lazy_static! {
     #[derive(Debug)]
@@ -78,7 +78,7 @@ impl Verifier for BrReg {
         response: VerificationResponse,
     ) -> Result<Verification, VerificationError> {
         match response.status() {
-            404 | 410 => return Ok(Verification::new(Unverified, json!({}))),
+            404 | 410 => Ok(Verification::new(Unverified, json!({}))),
             200 | 500 => {
                 let mut v: Value = serde_json::from_str(response.body())
                     .map_err(VerificationError::JsonParsingError)?;
@@ -94,7 +94,7 @@ impl Verifier for BrReg {
 
                 Ok(Verification::new(self.qualify(hash), json!(hash)))
             }
-            _ => return Err(VerificationError::UnexpectedStatusCode(response.status())),
+            _ => Err(VerificationError::UnexpectedStatusCode(response.status())),
         }
     }
 }
