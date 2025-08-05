@@ -9,8 +9,7 @@ use serde_json::json;
 // https://www.tax.service.gov.uk/check-vat-number/enter-vat-details
 // https://developer.service.hmrc.gov.uk/api-documentation/docs/api/service/vat-registered-companies-api/1.0/oas/page
 
-static BASE_URI: &'static str =
-    "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
+static BASE_URI: &str = "https://api.service.hmrc.gov.uk/organisations/vat/check-vat-number/lookup";
 const NOT_FOUND: &str = "NOT_FOUND";
 #[allow(dead_code)]
 const SERVER_ERROR: &str = "SERVER_ERROR";
@@ -20,17 +19,17 @@ pub struct Hmrc;
 
 impl Verifier for Hmrc {
     fn make_request(&self, tax_id: &TaxId) -> Result<VerificationResponse, VerificationError> {
-        let client = reqwest::blocking::Client::new();
-        let res = client
-            .get(format!("{}/{}", BASE_URI, tax_id.local_value()))
+        let mut res = ureq::get(format!("{}/{}", BASE_URI, tax_id.local_value()))
             .header("Accept", "application/vnd.hmrc.1.0+json")
-            .send()
+            .call()
             .map_err(VerificationError::HttpError)?;
 
-        Ok(VerificationResponse::new(
-            res.status().as_u16(),
-            res.text().map_err(VerificationError::HttpError)?,
-        ))
+        let res_body = res
+            .body_mut()
+            .read_to_string()
+            .map_err(VerificationError::HttpError)?;
+
+        Ok(VerificationResponse::new(res.status().as_u16(), res_body))
     }
 
     fn parse_response(

@@ -15,7 +15,7 @@ pub enum ValidationError {
 #[derive(thiserror::Error)]
 pub enum VerificationError {
     #[error("HTTP client error: {0}")]
-    HttpError(#[from] reqwest::Error),
+    HttpError(#[from] ureq::Error),
 
     #[error("JSON parsing error: {0}")]
     JsonParsingError(#[source] serde_json::Error),

@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
-use toml;
 
 lazy_static! {
     static ref TRANSLATIONS: HashMap<String, String> = {
