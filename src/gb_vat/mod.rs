@@ -2,22 +2,20 @@ mod hmrc;
 
 use crate::verification::Verifier;
 use crate::TaxIdType;
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
-lazy_static! {
-    #[derive(Debug)]
-    pub static ref GB_VAT_PATTERN: HashMap<String, Regex> = {
-        let mut m = HashMap::new();
-        m.insert(
-            "GB".to_string(),
-            Regex::new(r"^GB([0-9]{9}|[0-9]{12}|(HA|GD)[0-9]{3})$").unwrap()
-        );
-        m
-    };
+pub static GB_VAT_PATTERN: LazyLock<HashMap<String, Regex>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
 
-}
+    m.insert(
+        "GB".to_string(),
+        Regex::new(r"^GB([0-9]{9}|[0-9]{12}|(HA|GD)[0-9]{3})$").unwrap(),
+    );
+
+    m
+});
 
 #[derive(Debug)]
 pub struct GbVat;

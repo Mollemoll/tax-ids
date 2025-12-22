@@ -1,5 +1,5 @@
-use lazy_static::lazy_static;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use serde_json::json;
 
@@ -39,22 +39,22 @@ const GLOBAL_MAX_CONCURRENT_REQ_TIME: &str = "GLOBAL_MAX_CONCURRENT_REQ_TIME";
 const MS_MAX_CONCURRENT_REQ: &str = "MS_MAX_CONCURRENT_REQ";
 const MS_MAX_CONCURRENT_REQ_TIME: &str = "MS_MAX_CONCURRENT_REQ_TIME";
 
-lazy_static! {
-    pub static ref FAULT_MAP: HashMap<&'static str, UnavailableReason> = {
-        let mut m = HashMap::new();
-        m.insert(SERVICE_UNAVAILABLE, ServiceUnavailable);
-        m.insert(MS_UNAVAILABLE, ServiceUnavailable);
-        // Not implemented: 'INVALID_REQUESTER_INFO'
-        m.insert(TIMEOUT, Timeout);
-        m.insert(VAT_BLOCKED, Block);
-        m.insert(IP_BLOCKED, Block);
-        m.insert(GLOBAL_MAX_CONCURRENT_REQ, RateLimit);
-        m.insert(GLOBAL_MAX_CONCURRENT_REQ_TIME, RateLimit);
-        m.insert(MS_MAX_CONCURRENT_REQ, RateLimit);
-        m.insert(MS_MAX_CONCURRENT_REQ_TIME, RateLimit);
-        m
-    };
-}
+static FAULT_MAP: LazyLock<HashMap<&'static str, UnavailableReason>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+
+    m.insert(SERVICE_UNAVAILABLE, ServiceUnavailable);
+    m.insert(MS_UNAVAILABLE, ServiceUnavailable);
+    // Not implemented: 'INVALID_REQUESTER_INFO'
+    m.insert(TIMEOUT, Timeout);
+    m.insert(VAT_BLOCKED, Block);
+    m.insert(IP_BLOCKED, Block);
+    m.insert(GLOBAL_MAX_CONCURRENT_REQ, RateLimit);
+    m.insert(GLOBAL_MAX_CONCURRENT_REQ_TIME, RateLimit);
+    m.insert(MS_MAX_CONCURRENT_REQ, RateLimit);
+    m.insert(MS_MAX_CONCURRENT_REQ_TIME, RateLimit);
+
+    m
+});
 
 #[derive(Debug)]
 pub struct Vies;

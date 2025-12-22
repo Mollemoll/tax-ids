@@ -2,21 +2,20 @@ mod bfs;
 
 use crate::verification::Verifier;
 use crate::TaxIdType;
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
-lazy_static! {
-    #[derive(Debug)]
-    pub static ref CH_VAT_PATTERN: HashMap<String, Regex> = {
-        let mut m = HashMap::new();
-        m.insert(
-            "CH".to_string(),
-            Regex::new(r"^CHE([0-9]{9}|-[0-9]{3}(\.[0-9]{3}){2})(?:\s(MWST|TVA|IVA))?$").unwrap()
-        );
-        m
-    };
-}
+static CH_VAT_PATTERN: LazyLock<HashMap<String, Regex>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+
+    m.insert(
+        "CH".to_string(),
+        Regex::new(r"^CHE([0-9]{9}|-[0-9]{3}(\.[0-9]{3}){2})(?:\s(MWST|TVA|IVA))?$").unwrap(),
+    );
+
+    m
+});
 
 #[derive(Debug)]
 pub struct ChVat;
