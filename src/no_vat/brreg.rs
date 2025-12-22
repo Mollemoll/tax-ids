@@ -17,7 +17,7 @@ use ureq::http::header::ACCEPT;
 
 static BASE_URI: &str = "https://data.brreg.no/enhetsregisteret/api/enheter";
 
-static REQUIREMENTS_TO_BE_VALID: LazyLock<HashMap<&'static str, bool>> = LazyLock::new(|| {
+pub static REQUIREMENTS_TO_BE_VALID: LazyLock<HashMap<&'static str, bool>> = LazyLock::new(|| {
     let mut map = HashMap::new();
 
     map.insert("registeredInVatRegister", true); // Registered for VAT

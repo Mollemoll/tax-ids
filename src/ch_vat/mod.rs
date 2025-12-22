@@ -6,7 +6,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 
-static CH_VAT_PATTERN: LazyLock<HashMap<String, Regex>> = LazyLock::new(|| {
+pub static CH_VAT_PATTERN: LazyLock<HashMap<String, Regex>> = LazyLock::new(|| {
     let mut m = HashMap::new();
 
     m.insert(

@@ -39,7 +39,7 @@ const GLOBAL_MAX_CONCURRENT_REQ_TIME: &str = "GLOBAL_MAX_CONCURRENT_REQ_TIME";
 const MS_MAX_CONCURRENT_REQ: &str = "MS_MAX_CONCURRENT_REQ";
 const MS_MAX_CONCURRENT_REQ_TIME: &str = "MS_MAX_CONCURRENT_REQ_TIME";
 
-static FAULT_MAP: LazyLock<HashMap<&'static str, UnavailableReason>> = LazyLock::new(|| {
+pub static FAULT_MAP: LazyLock<HashMap<&'static str, UnavailableReason>> = LazyLock::new(|| {
     let mut m = HashMap::new();
 
     m.insert(SERVICE_UNAVAILABLE, ServiceUnavailable);
