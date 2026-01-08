@@ -5,9 +5,9 @@ use crate::verification::UnavailableReason::ServiceUnavailable;
 use crate::verification::VerificationStatus::*;
 use crate::verification::{Verification, VerificationResponse, VerificationStatus, Verifier};
 use crate::TaxId;
-use lazy_static::lazy_static;
 use serde_json::{json, Value};
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use ureq::http::header::ACCEPT;
 
 // INFO(2024-05-08 mollemoll):
@@ -17,17 +17,16 @@ use ureq::http::header::ACCEPT;
 
 static BASE_URI: &str = "https://data.brreg.no/enhetsregisteret/api/enheter";
 
-lazy_static! {
-    #[derive(Debug)]
-    pub static ref REQUIREMENTS_TO_BE_VALID : HashMap<&'static str, bool> = {
-        let mut map = HashMap::new();
-        map.insert("registeredInVatRegister", true); // Registered for VAT
-        map.insert("bankruptcy", false); // In default?
-        map.insert("underLiquidation", false);
-        map.insert("underForcedLiquidation", false); // Forced liquidation?
-        map
-    };
-}
+pub static REQUIREMENTS_TO_BE_VALID: LazyLock<HashMap<&'static str, bool>> = LazyLock::new(|| {
+    let mut map = HashMap::new();
+
+    map.insert("registeredInVatRegister", true); // Registered for VAT
+    map.insert("bankruptcy", false); // In default?
+    map.insert("underLiquidation", false);
+    map.insert("underForcedLiquidation", false); // Forced liquidation?
+
+    map
+});
 
 #[derive(Debug)]
 pub struct BrReg;

@@ -3,21 +3,20 @@ mod vies;
 
 use crate::verification::Verifier;
 use crate::TaxIdType;
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 use syntax::EU_VAT_PATTERNS;
 
 #[derive(Debug)]
 pub struct EuVat;
 
-lazy_static! {
-    #[derive(Debug)]
-    pub static ref COUNTRIES: Vec<&'static str> = vec![
-        "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU",
-        "IE", "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK", "XI",
-    ];
-}
+pub static COUNTRIES: LazyLock<Vec<&'static str>> = LazyLock::new(|| {
+    vec![
+        "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR", "HU", "IE",
+        "IT", "LT", "LU", "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK", "XI",
+    ]
+});
 
 impl TaxIdType for EuVat {
     fn name(&self) -> &'static str {

@@ -3,18 +3,15 @@ mod translator;
 
 use crate::verification::Verifier;
 use crate::{TaxId, TaxIdType};
-use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
-lazy_static! {
-    #[derive(Debug)]
-    pub static ref NO_VAT_PATTERN: HashMap<String, Regex> = {
-        let mut m = HashMap::new();
-        m.insert("NO".to_string(), Regex::new(r"^NO[0-9]{9}(MVA)?$").unwrap());
-        m
-    };
-}
+pub static NO_VAT_PATTERN: LazyLock<HashMap<String, Regex>> = LazyLock::new(|| {
+    let mut m = HashMap::new();
+    m.insert("NO".to_string(), Regex::new(r"^NO[0-9]{9}(MVA)?$").unwrap());
+    m
+});
 
 #[derive(Debug)]
 pub struct NoVat;

@@ -1,14 +1,12 @@
-use lazy_static::lazy_static;
 use serde_json::{Map, Value};
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::LazyLock};
 
-lazy_static! {
-    static ref TRANSLATIONS: HashMap<String, String> = {
-        let translations: HashMap<String, String> =
-            toml::from_str(include_str!("translations.toml")).unwrap();
-        translations
-    };
-}
+static TRANSLATIONS: LazyLock<HashMap<String, String>> = LazyLock::new(|| {
+    let translations: HashMap<String, String> =
+        toml::from_str(include_str!("translations.toml")).unwrap();
+
+    translations
+});
 
 pub fn translate_keys(obj: &mut Value) {
     let translations = &*TRANSLATIONS;
